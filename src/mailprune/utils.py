@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from collections import defaultdict
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -38,16 +38,6 @@ def save_email_cache(cache: Dict[str, Dict[str, Any]]) -> None:
 
 # Common constants
 EMAIL_CATEGORIES = ["updates_count", "promotions_count", "social_count", "important_count"]
-
-
-def get_engagement_tiers(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-    """Get engagement tier dataframes."""
-    return {
-        "high": df[df["open_rate"] >= 80],
-        "medium": df[(df["open_rate"] >= 50) & (df["open_rate"] < 80)],
-        "low": df[(df["open_rate"] > 0) & (df["open_rate"] < 50)],
-        "zero": df[df["open_rate"] == 0],
-    }
 
 
 def get_engagement_tier_names() -> Dict[str, str]:
@@ -83,11 +73,6 @@ def get_sender_subjects_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str
         subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
         sender_subjects[sender].append(subject)
     return dict(sender_subjects)
-
-
-def get_top_senders_by_volume(sender_subjects: Dict[str, List[str]], top_n: int) -> List[Tuple[str, int]]:
-    """Get top senders by email volume."""
-    return [(sender, len(subjects)) for sender, subjects in sorted(sender_subjects.items(), key=lambda x: len(x[1]), reverse=True)[:top_n]]
 
 
 def filter_common_words(words: List[str]) -> List[str]:

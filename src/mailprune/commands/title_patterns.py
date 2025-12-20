@@ -7,7 +7,8 @@ from collections import Counter
 import click
 
 from mailprune import get_top_noise_makers, load_audit_data
-from mailprune.utils import filter_common_words, get_sender_subjects_from_cache, get_top_senders_by_volume, load_email_cache
+from mailprune.analysis import get_top_senders_by_volume
+from mailprune.utils import filter_common_words, get_sender_subjects_from_cache, load_email_cache
 
 
 def analyze_title_patterns(cache_path: str, csv_path: str, top_n: int, by: str) -> None:

@@ -22,6 +22,21 @@ def get_top_noise_makers(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     return df.nlargest(n, "ignorance_score")
 
 
+def get_engagement_tiers(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    """Get engagement tier dataframes."""
+    return {
+        "high": df[df["open_rate"] >= 80],
+        "medium": df[(df["open_rate"] >= 50) & (df["open_rate"] < 80)],
+        "low": df[(df["open_rate"] > 0) & (df["open_rate"] < 50)],
+        "zero": df[df["open_rate"] == 0],
+    }
+
+
+def get_top_senders_by_volume(sender_subjects: Dict[str, List[str]], top_n: int) -> List[Tuple[str, int]]:
+    """Get top senders by email volume."""
+    return [(sender, len(subjects)) for sender, subjects in sorted(sender_subjects.items(), key=lambda x: len(x[1]), reverse=True)[:top_n]]
+
+
 def calculate_overall_metrics(df: pd.DataFrame) -> Dict[str, float]:
     """Calculate overall email metrics."""
     total_emails = df.total_volume.sum()
