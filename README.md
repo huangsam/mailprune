@@ -45,17 +45,17 @@ uv run python scripts/mailprune.py summary
 # Analyze sender engagement patterns and tiers
 uv run python scripts/mailprune.py engagement
 
-# Show all senders with zero engagement (0% open rate)
-uv run python scripts/mailprune.py zero-engagement
+# Show detailed listing of zero engagement senders
+uv run python scripts/mailprune.py engagement --tier zero
 
 # Analyze specific sender
 uv run python scripts/mailprune.py sender "newsletter@company.com"
 
-# Analyze title patterns for top senders
+# Analyze title patterns for top senders (by volume)
 uv run python scripts/mailprune.py title-patterns --top-n 3
 
 # Analyze title patterns for top problematic senders (by ignorance score)
-uv run python scripts/mailprune.py problematic-titles --top-n 5
+uv run python scripts/mailprune.py title-patterns --by ignorance --top-n 5
 
 # Analyze unread emails by Gmail categories
 uv run python scripts/mailprune.py unread-by-category
