@@ -5,7 +5,6 @@ Utility functions for the mailprune project.
 import json
 import logging
 import os
-from collections import defaultdict
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -62,67 +61,6 @@ def format_sender_list(df: pd.DataFrame, max_name_length: int = 40) -> List[str]
     return [
         f"{row['from'][:max_name_length]:<{max_name_length}} | {int(row['total_volume']):3d} emails | {row['open_rate']:5.1f}% open" for _, row in df.iterrows()
     ]
-
-
-def get_sender_subjects_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str, List[str]]:
-    """Extract sender-subject mapping from email cache."""
-    sender_subjects = defaultdict(list)
-    for email in cache.values():
-        headers = email.get("payload", {}).get("headers", [])
-        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
-        subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
-        sender_subjects[sender].append(subject)
-    return dict(sender_subjects)
-
-
-def filter_common_words(words: List[str]) -> List[str]:
-    """Filter out common English words and short words from subject analysis.
-
-    Removes common prepositions, articles, and conjunctions that don't provide
-    meaningful insight into email patterns. Also filters out words shorter
-    than 4 characters to focus on more significant terms.
-
-    Args:
-        words: List of words extracted from email subjects
-
-    Returns:
-        Filtered list of words suitable for pattern analysis
-    """
-    common_words = {
-        "with",
-        "from",
-        "your",
-        "this",
-        "that",
-        "have",
-        "been",
-        "will",
-        "they",
-        "their",
-        "there",
-        "here",
-        "when",
-        "where",
-        "what",
-        "which",
-        "then",
-        "than",
-        "into",
-        "onto",
-        "over",
-        "under",
-        "after",
-        "before",
-        "while",
-        "since",
-        "until",
-        "through",
-        "during",
-        "between",
-        "among",
-        "within",
-    }
-    return [word.lower() for word in words if len(word) > 3 and word.lower() not in common_words]
 
 
 def get_category_distribution(df: pd.DataFrame, total_emails: int) -> List[str]:

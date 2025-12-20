@@ -2,6 +2,7 @@ import logging
 import os
 import queue
 import time
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -301,3 +302,14 @@ def save_report(audit_summary: pd.DataFrame) -> None:
     output_path: str = "data/noise_report.csv"
     audit_summary.to_csv(output_path, index=False)
     logger.info(f"Audit complete! Report saved to {output_path}")
+
+
+def get_sender_subjects_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str, List[str]]:
+    """Extract sender-subject mapping from email cache."""
+    sender_subjects = defaultdict(list)
+    for email in cache.values():
+        headers = email.get("payload", {}).get("headers", [])
+        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
+        subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
+        sender_subjects[sender].append(subject)
+    return dict(sender_subjects)

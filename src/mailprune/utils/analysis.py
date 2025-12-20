@@ -238,5 +238,55 @@ def analyze_sender_email_patterns(sender_emails: List[str]) -> Tuple[List[str], 
     return valuable_emails, promotional_emails, uncategorized
 
 
+def filter_common_words(words: List[str]) -> List[str]:
+    """Filter out common English words and short words from subject analysis.
+
+    Removes common prepositions, articles, and conjunctions that don't provide
+    meaningful insight into email patterns. Also filters out words shorter
+    than 4 characters to focus on more significant terms.
+
+    Args:
+        words: List of words extracted from email subjects
+
+    Returns:
+        Filtered list of words suitable for pattern analysis
+    """
+    common_words = {
+        "with",
+        "from",
+        "your",
+        "this",
+        "that",
+        "have",
+        "been",
+        "will",
+        "they",
+        "their",
+        "there",
+        "here",
+        "when",
+        "where",
+        "what",
+        "which",
+        "then",
+        "than",
+        "into",
+        "onto",
+        "over",
+        "under",
+        "after",
+        "before",
+        "while",
+        "since",
+        "until",
+        "through",
+        "during",
+        "between",
+        "among",
+        "within",
+    }
+    return [word.lower() for word in words if len(word) > 3 and word.lower() not in common_words]
+
+
 # Baseline metrics from the start of cleanup (for comparison)
 BASELINE_METRICS = {"total_emails": 1974, "unread_percentage": 80.1, "average_open_rate": 12.0, "senders_never_opened": 313, "top_ignorance_score": 8300}
