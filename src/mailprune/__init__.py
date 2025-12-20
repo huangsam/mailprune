@@ -9,7 +9,6 @@ from .utils import (
     generate_cleanup_report,
     get_top_noise_makers,
     load_audit_data,
-    perform_audit,
 )
 
 __all__ = [
@@ -21,7 +20,6 @@ __all__ = [
     "generate_cleanup_report",
     "get_top_noise_makers",
     "load_audit_data",
-    "perform_audit",
 ]
 
 __version__ = "0.1.0"

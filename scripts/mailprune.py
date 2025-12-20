@@ -24,13 +24,13 @@ sys.path.insert(0, str(src_path))
 from mailprune import (  # noqa: E402
     analyze_sender_patterns,
     load_audit_data,
-    perform_audit,
 )
 from mailprune.commands import (  # noqa: E402
     analyze_engagement,
     analyze_title_patterns,
     analyze_unread_by_category,
     generate_report,
+    perform_audit,
     show_summary,
 )
 

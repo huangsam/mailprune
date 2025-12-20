@@ -19,7 +19,6 @@ from .analysis import (
     get_top_senders_by_volume,
     load_audit_data,
 )
-from .audit import perform_audit
 from .helpers import (
     EMAIL_CATEGORIES,
     calculate_percentage,
@@ -44,8 +43,6 @@ __all__ = [
     "get_top_noise_makers",
     "get_top_senders_by_volume",
     "load_audit_data",
-    # From audit
-    "perform_audit",
     # From helpers
     "EMAIL_CATEGORIES",
     "calculate_percentage",

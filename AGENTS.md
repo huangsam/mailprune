@@ -10,6 +10,7 @@ mailprune/
 │   ├── __init__.py        # Package exports
 │   ├── commands/          # CLI command implementations
 │   │   ├── __init__.py   # Command package exports
+│   │   ├── audit.py      # Audit execution command
 │   │   ├── engagement.py # Engagement analysis command
 │   │   ├── report.py     # Comprehensive report command
 │   │   ├── summary.py    # Summary statistics command
@@ -90,11 +91,12 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 
 ### Core Modules
 - `src/mailprune/utils/analysis.py` - Contains all analysis functions and metrics calculations
-- `src/mailprune/utils/audit.py` - Gmail API integration and audit execution
+- `src/mailprune/utils/audit.py` - Gmail API integration and low-level audit utilities
 - `src/mailprune/utils/constants.py` - Configuration constants and baseline metrics
 - `src/mailprune/utils/helpers.py` - General utility functions for data loading and processing
 
 ### Command Modules
+- `src/mailprune/commands/audit.py` - High-level audit execution command
 - `src/mailprune/commands/report.py` - Comprehensive email audit report generation
 - `src/mailprune/commands/summary.py` - Email distribution summary statistics
 - `src/mailprune/commands/engagement.py` - Sender engagement pattern analysis
