@@ -8,6 +8,7 @@ from typing import Optional
 
 import pandas as pd
 
+from mailprune.constants import DEFAULT_MAX_EMAILS
 from mailprune.utils.audit import (
     aggregate_and_score,
     fetch_message_ids,
@@ -17,7 +18,6 @@ from mailprune.utils.audit import (
     save_report,
     setup_audit,
 )
-from mailprune.utils.constants import DEFAULT_MAX_EMAILS
 from mailprune.utils.helpers import save_email_cache
 
 logger = logging.getLogger(__name__)

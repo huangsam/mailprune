@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from .constants import DEFAULT_CSV_PATH, ENGAGEMENT_HIGH_THRESHOLD, ENGAGEMENT_LOW_THRESHOLD, ENGAGEMENT_MEDIUM_THRESHOLD
+from ..constants import DEFAULT_CSV_PATH, ENGAGEMENT_HIGH_THRESHOLD, ENGAGEMENT_LOW_THRESHOLD, ENGAGEMENT_MEDIUM_THRESHOLD
 
 
 def load_audit_data(csv_path: str = DEFAULT_CSV_PATH) -> pd.DataFrame:

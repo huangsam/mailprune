@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from .constants import DEFAULT_CACHE_PATH
+from ..constants import DEFAULT_CACHE_PATH
 
 logger = logging.getLogger(__name__)
 

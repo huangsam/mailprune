@@ -8,6 +8,7 @@ This document provides information specifically for AI agents and automated tool
 mailprune/
 ├── src/mailprune/          # Core package
 │   ├── __init__.py        # Package exports
+│   ├── constants.py       # Configuration constants and Gmail labels
 │   ├── commands/          # CLI command implementations
 │   │   ├── __init__.py   # Command package exports
 │   │   ├── audit.py      # Audit execution command
@@ -20,7 +21,6 @@ mailprune/
 │       ├── __init__.py   # Utils package exports
 │       ├── analysis.py   # Email analysis functions
 │       ├── audit.py      # Gmail API integration
-│       ├── constants.py  # Constants and configuration
 │       └── helpers.py    # General utility functions
 ├── scripts/               # Executable scripts
 │   ├── __init__.py       # Package marker
@@ -90,9 +90,9 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 ## Key Files for Agents
 
 ### Core Modules
+- `src/mailprune/constants.py` - Configuration constants and baseline metrics
 - `src/mailprune/utils/analysis.py` - Email analysis, metrics calculations, and text processing functions
 - `src/mailprune/utils/audit.py` - Gmail API integration, data extraction, and low-level audit utilities
-- `src/mailprune/utils/constants.py` - Configuration constants and baseline metrics
 - `src/mailprune/utils/helpers.py` - General utility functions for data I/O, formatting, and calculations
 
 ### Command Modules

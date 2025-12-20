@@ -13,7 +13,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-from .constants import DEFAULT_POOL_SIZE, DEFAULT_TOKEN_PATH, GMAIL_API_SCOPES, GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, GmailLabels
+from ..constants import DEFAULT_POOL_SIZE, DEFAULT_TOKEN_PATH, GMAIL_API_SCOPES, GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, GmailLabels
 from .helpers import load_email_cache
 
 logger = logging.getLogger(__name__)
