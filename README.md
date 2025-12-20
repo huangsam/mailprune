@@ -36,14 +36,17 @@ uv run python scripts/mailprune.py audit --max-emails 2000
 ### Analyzing Audit Results
 
 ```bash
-# Generate comprehensive cleanup report
+# Generate comprehensive email audit and cleanup report
 uv run python scripts/mailprune.py report
 
-# Show top noise makers
-uv run python scripts/mailprune.py top-noise --n 10
+# Show email distribution summary and statistics
+uv run python scripts/mailprune.py summary
 
-# Get overall email metrics
-uv run python scripts/mailprune.py metrics
+# Analyze sender engagement patterns and tiers
+uv run python scripts/mailprune.py engagement
+
+# Show all senders with zero engagement (0% open rate)
+uv run python scripts/mailprune.py zero-engagement
 
 # Analyze specific sender
 uv run python scripts/mailprune.py sender "newsletter@company.com"
@@ -53,18 +56,6 @@ uv run python scripts/mailprune.py title-patterns --top-n 3
 
 # Analyze title patterns for top problematic senders (by ignorance score)
 uv run python scripts/mailprune.py problematic-titles --top-n 5
-
-# Show cleanup progress
-uv run python scripts/mailprune.py progress
-
-# Show email distribution summary
-uv run python scripts/mailprune.py summary
-
-# Analyze sender engagement patterns
-uv run python scripts/mailprune.py engagement
-
-# Show top senders by volume
-uv run python scripts/mailprune.py top-volume --top-n 10
 ```
 
 ## For AI Agents and Automated Tools

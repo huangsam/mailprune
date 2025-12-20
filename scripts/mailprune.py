@@ -82,45 +82,120 @@ def audit(max_emails: int) -> None:
 @cli.command()
 @click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
 def report(csv_path: str):
-    """Generate a comprehensive cleanup report."""
+    """Generate a comprehensive email audit and cleanup report."""
     df = load_audit_data(csv_path)
     if df.empty:
         return
 
-    report = generate_cleanup_report(df, BASELINE_METRICS)
-    click.echo(report)
+    current_metrics = calculate_overall_metrics(df)
+    total_emails = df["total_volume"].sum()
 
+    report = []
+    report.append("=== 📧 COMPREHENSIVE EMAIL AUDIT REPORT ===")
+    report.append("")
 
-@cli.command()
-@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
-@click.option("--n", default=10, help="Number of top noise makers to show")
-def top_noise(csv_path: str, n: int):
-    """Show the top N noise makers."""
-    df = load_audit_data(csv_path)
-    if df.empty:
-        return
+    # Current Status
+    report.append("📊 CURRENT STATUS")
+    report.append(f"   • {len(df)} unique senders")
+    report.append(f"   • {int(current_metrics['total_emails'])} total emails")
+    report.append(f"   • Unread Rate: {current_metrics['unread_percentage']:.1f}%")
+    report.append(f"   • Average Open Rate: {current_metrics['average_open_rate']:.1f}%")
+    report.append(f"   • Senders Never Opened: {int(current_metrics['senders_never_opened'])}")
+    report.append(f"   • Top Ignorance Score: {current_metrics['top_ignorance_score']:.0f}")
+    report.append("")
 
-    top_n = get_top_noise_makers(df, n)
-    click.echo(f"=== 🏆 TOP {n} NOISE MAKERS ===")
-    for i, (_, row) in enumerate(top_n.iterrows(), 1):
-        click.echo(f"{i:2d}. {row['from']:<50} | Vol: {int(row['total_volume']):3d} | Open: {row['open_rate']:5.1f}% | Score: {row['ignorance_score']:6.0f}")
+    # Progress Metrics
+    if BASELINE_METRICS:
+        unread_improvement = BASELINE_METRICS["unread_percentage"] - current_metrics["unread_percentage"]
+        top_score_reduction = BASELINE_METRICS["top_ignorance_score"] - current_metrics["top_ignorance_score"]
+        top_score_reduction_pct = top_score_reduction / BASELINE_METRICS["top_ignorance_score"] * 100
+        open_rate_improvement = current_metrics["average_open_rate"] - BASELINE_METRICS["average_open_rate"]
 
+        report.append("📈 IMPROVEMENT METRICS")
+        report.append(f"   • Unread Rate Improvement: {unread_improvement:.1f}%")
+        report.append(f"   • Top Score Reduction: {top_score_reduction:.0f} ({top_score_reduction_pct:.0f}%)")
+        report.append(f"   • Open Rate Improvement: {open_rate_improvement:.1f}%")
+        report.append("")
 
-@cli.command()
-@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
-def metrics(csv_path: str):
-    """Show overall email metrics."""
-    df = load_audit_data(csv_path)
-    if df.empty:
-        return
+    # Distribution Summary
+    top_10_volume = df.nlargest(10, "total_volume")["total_volume"].sum()
+    top_10_noise = df.nlargest(10, "ignorance_score")["total_volume"].sum()
+    zero_open = df[df["open_rate"] == 0]["total_volume"].sum()
+    zero_open_senders = len(df[df["open_rate"] == 0])
+    high_volume = df[df["total_volume"] > 50]["total_volume"].sum()
+    high_volume_senders = len(df[df["total_volume"] > 50])
 
-    metrics = calculate_overall_metrics(df)
-    click.echo("=== 📊 EMAIL METRICS ===")
-    click.echo(f"Total Emails: {int(metrics['total_emails'])}")
-    click.echo(f"Unread Rate: {metrics['unread_percentage']:.1f}%")
-    click.echo(f"Average Open Rate: {metrics['average_open_rate']:.1f}%")
-    click.echo(f"Senders Never Opened: {int(metrics['senders_never_opened'])}")
-    click.echo(f"Top Ignorance Score: {metrics['top_ignorance_score']:.0f}")
+    report.append("📂 EMAIL DISTRIBUTION")
+    report.append(f"   • Top 10 Senders by Volume: {top_10_volume} emails ({top_10_volume / total_emails * 100:.1f}%)")
+    report.append(f"   • Top 10 Noise Makers: {top_10_noise} emails ({top_10_noise / total_emails * 100:.1f}%)")
+    report.append(f"   • Zero Engagement: {zero_open_senders} senders, {zero_open} emails ({zero_open / total_emails * 100:.1f}%)")
+    report.append(f"   • High Volume Senders (>50 emails): {high_volume_senders} senders, {high_volume} emails ({high_volume / total_emails * 100:.1f}%)")
+    report.append("")
+
+    # Engagement Breakdown
+    high_engagement = df[df["open_rate"] >= 80]
+    medium_engagement = df[(df["open_rate"] >= 50) & (df["open_rate"] < 80)]
+    low_engagement = df[(df["open_rate"] > 0) & (df["open_rate"] < 50)]
+    zero_engagement = df[df["open_rate"] == 0]
+
+    report.append("🎯 ENGAGEMENT BREAKDOWN")
+    if len(high_engagement) > 0:
+        tier_emails = high_engagement["total_volume"].sum()
+        report.append(f"   • High Engagement (80-100%): {len(high_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
+    if len(medium_engagement) > 0:
+        tier_emails = medium_engagement["total_volume"].sum()
+        report.append(f"   • Medium Engagement (50-79%): {len(medium_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
+    if len(low_engagement) > 0:
+        tier_emails = low_engagement["total_volume"].sum()
+        report.append(f"   • Low Engagement (1-49%): {len(low_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
+    if len(zero_engagement) > 0:
+        tier_emails = zero_engagement["total_volume"].sum()
+        report.append(f"   • Zero Engagement (0%): {len(zero_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
+    report.append("")
+
+    # Category Distribution
+    categories = ["updates_count", "promotions_count", "social_count", "important_count"]
+    report.append("📂 EMAIL CATEGORIES")
+    for cat in categories:
+        total = df[cat].sum()
+        if total > 0:
+            report.append(f"   • {cat.replace('_count', '').title()}: {total} emails ({total / total_emails * 100:.1f}%)")
+    report.append("")
+
+    # Top Noise Makers
+    report.append("🏆 TOP 10 NOISE MAKERS")
+    top10 = get_top_noise_makers(df, 10)
+    for i, (_, row) in enumerate(top10.iterrows(), 1):
+        report.append(f"{i:2d}. {row['from']:<50} | Vol: {int(row['total_volume']):3d} | Open: {row['open_rate']:5.1f}% | Score: {row['ignorance_score']:6.0f}")
+    report.append("")
+
+    # Cleanup Recommendations
+    report.append("🎯 CLEANUP RECOMMENDATIONS")
+
+    # Zero engagement senders
+    never_opened = df[df.open_rate == 0].nlargest(5, "total_volume")
+    if not never_opened.empty:
+        report.append("🗑️  PRIORITY: Unsubscribe from these (0% open rate):")
+        for _, row in never_opened.iterrows():
+            report.append(f"      • {row['from']} ({int(row['total_volume'])} emails)")
+        report.append("")
+
+    # High volume, low engagement
+    high_volume_noise = df[(df.total_volume >= 20) & (df.open_rate < 50)].nlargest(5, "ignorance_score")
+    if not high_volume_noise.empty:
+        report.append("🎛️  REVIEW: High-volume, low-engagement senders:")
+        for _, row in high_volume_noise.iterrows():
+            report.append(f"      • {row['from']} ({int(row['total_volume'])} emails, {row['open_rate']:.1f}% open)")
+        report.append("")
+
+    # Top high-engagement senders
+    if len(high_engagement) > 0:
+        report.append("✅ KEEP: Your most engaged senders:")
+        top_engaged = high_engagement.nlargest(3, "total_volume")
+        for _, row in top_engaged.iterrows():
+            report.append(f"      • {row['from'][:40]:<40} ({int(row['total_volume'])} emails, {row['open_rate']:.1f}% open)")
+
+    click.echo("\n".join(report))
 
 
 @cli.command()
@@ -141,28 +216,6 @@ def sender(sender_name: str, csv_path: str):
         click.echo(f"Unread Count: {sender_data['unread_count']}")
     else:
         click.echo(f"Sender '{sender_name}' not found in audit data.")
-
-
-@cli.command()
-@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
-def progress(csv_path: str):
-    """Show cleanup progress compared to baseline."""
-    df = load_audit_data(csv_path)
-    if df.empty:
-        return
-
-    current_metrics = calculate_overall_metrics(df)
-
-    # Calculate improvements
-    unread_improvement = BASELINE_METRICS["unread_percentage"] - current_metrics["unread_percentage"]
-    top_score_reduction = BASELINE_METRICS["top_ignorance_score"] - current_metrics["top_ignorance_score"]
-    top_score_reduction_pct = top_score_reduction / BASELINE_METRICS["top_ignorance_score"] * 100
-    open_rate_improvement = current_metrics["average_open_rate"] - BASELINE_METRICS["average_open_rate"]
-
-    click.echo("=== 📈 CLEANUP PROGRESS ===")
-    click.echo(f"📉 Unread Rate Improvement: {unread_improvement:.1f}%")
-    click.echo(f"🎯 Top Score Reduction: {top_score_reduction:.0f} ({top_score_reduction_pct:.0f}%)")
-    click.echo(f"📈 Open Rate Improvement: {open_rate_improvement:.1f}%")
 
 
 @cli.command()
