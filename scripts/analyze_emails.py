@@ -6,6 +6,7 @@ Provides various analysis functions for email audit data.
 
 import sys
 from pathlib import Path
+
 import click
 
 # Add the src directory to the path so we can import mailprune
@@ -13,14 +14,7 @@ project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
-from mailprune import (
-    load_audit_data,
-    get_top_noise_makers,
-    calculate_overall_metrics,
-    analyze_sender_patterns,
-    generate_cleanup_report,
-    BASELINE_METRICS
-)
+from mailprune import BASELINE_METRICS, analyze_sender_patterns, calculate_overall_metrics, generate_cleanup_report, get_top_noise_makers, load_audit_data
 
 
 @click.group()
@@ -30,7 +24,7 @@ def cli():
 
 
 @cli.command()
-@click.option('--csv-path', default='data/noise_report.csv', help='Path to the audit CSV file')
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
 def report(csv_path: str):
     """Generate a comprehensive cleanup report."""
     df = load_audit_data(csv_path)
@@ -42,8 +36,8 @@ def report(csv_path: str):
 
 
 @cli.command()
-@click.option('--csv-path', default='data/noise_report.csv', help='Path to the audit CSV file')
-@click.option('--n', default=10, help='Number of top noise makers to show')
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
+@click.option("--n", default=10, help="Number of top noise makers to show")
 def top_noise(csv_path: str, n: int):
     """Show the top N noise makers."""
     df = load_audit_data(csv_path)
@@ -57,7 +51,7 @@ def top_noise(csv_path: str, n: int):
 
 
 @cli.command()
-@click.option('--csv-path', default='data/noise_report.csv', help='Path to the audit CSV file')
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
 def metrics(csv_path: str):
     """Show overall email metrics."""
     df = load_audit_data(csv_path)
@@ -74,8 +68,8 @@ def metrics(csv_path: str):
 
 
 @cli.command()
-@click.argument('sender_name')
-@click.option('--csv-path', default='data/noise_report.csv', help='Path to the audit CSV file')
+@click.argument("sender_name")
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
 def sender(sender_name: str, csv_path: str):
     """Analyze a specific sender."""
     df = load_audit_data(csv_path)
@@ -94,7 +88,7 @@ def sender(sender_name: str, csv_path: str):
 
 
 @cli.command()
-@click.option('--csv-path', default='data/noise_report.csv', help='Path to the audit CSV file')
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
 def progress(csv_path: str):
     """Show cleanup progress compared to baseline."""
     df = load_audit_data(csv_path)
@@ -104,10 +98,10 @@ def progress(csv_path: str):
     current_metrics = calculate_overall_metrics(df)
 
     # Calculate improvements
-    unread_improvement = BASELINE_METRICS['unread_percentage'] - current_metrics['unread_percentage']
-    top_score_reduction = BASELINE_METRICS['top_ignorance_score'] - current_metrics['top_ignorance_score']
-    top_score_reduction_pct = top_score_reduction / BASELINE_METRICS['top_ignorance_score'] * 100
-    open_rate_improvement = current_metrics['average_open_rate'] - BASELINE_METRICS['average_open_rate']
+    unread_improvement = BASELINE_METRICS["unread_percentage"] - current_metrics["unread_percentage"]
+    top_score_reduction = BASELINE_METRICS["top_ignorance_score"] - current_metrics["top_ignorance_score"]
+    top_score_reduction_pct = top_score_reduction / BASELINE_METRICS["top_ignorance_score"] * 100
+    open_rate_improvement = current_metrics["average_open_rate"] - BASELINE_METRICS["average_open_rate"]
 
     click.echo("=== 📈 CLEANUP PROGRESS ===")
     click.echo(f"📉 Unread Rate Improvement: {unread_improvement:.1f}%")

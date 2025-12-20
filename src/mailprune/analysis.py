@@ -3,8 +3,9 @@ Email analysis utilities for mailprune.
 Provides functions to analyze email audit data and generate insights.
 """
 
+from typing import Dict, List, Optional, Tuple
+
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
 
 
 def load_audit_data(csv_path: str = "data/noise_report.csv") -> pd.DataFrame:
@@ -18,7 +19,7 @@ def load_audit_data(csv_path: str = "data/noise_report.csv") -> pd.DataFrame:
 
 def get_top_noise_makers(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     """Get the top N noise makers by ignorance score."""
-    return df.nlargest(n, 'ignorance_score')
+    return df.nlargest(n, "ignorance_score")
 
 
 def calculate_overall_metrics(df: pd.DataFrame) -> Dict[str, float]:
@@ -30,37 +31,37 @@ def calculate_overall_metrics(df: pd.DataFrame) -> Dict[str, float]:
     top_score = df.ignorance_score.max()
 
     return {
-        'total_emails': total_emails,
-        'unread_percentage': unread_pct,
-        'average_open_rate': avg_open_rate,
-        'senders_never_opened': never_opened,
-        'top_ignorance_score': top_score
+        "total_emails": total_emails,
+        "unread_percentage": unread_pct,
+        "average_open_rate": avg_open_rate,
+        "senders_never_opened": never_opened,
+        "top_ignorance_score": top_score,
     }
 
 
 def analyze_sender_patterns(df: pd.DataFrame, sender_name: str) -> Optional[Dict]:
     """Analyze a specific sender's email patterns."""
-    sender_data = df[df['from'].str.contains(sender_name, case=False, na=False)]
+    sender_data = df[df["from"].str.contains(sender_name, case=False, na=False)]
     if sender_data.empty:
         return None
 
     row = sender_data.iloc[0]
     return {
-        'sender': row['from'],
-        'total_emails': int(row['total_volume']),
-        'open_rate': row['open_rate'],
-        'ignorance_score': row['ignorance_score'],
-        'unread_count': int(row['unread_count'])
+        "sender": row["from"],
+        "total_emails": int(row["total_volume"]),
+        "open_rate": row["open_rate"],
+        "ignorance_score": row["ignorance_score"],
+        "unread_count": int(row["unread_count"]),
     }
 
 
 def compare_metrics(before_metrics: Dict, after_metrics: Dict) -> Dict:
     """Compare metrics before and after cleanup."""
     return {
-        'unread_improvement': before_metrics['unread_percentage'] - after_metrics['unread_percentage'],
-        'top_score_reduction': before_metrics['top_ignorance_score'] - after_metrics['top_ignorance_score'],
-        'top_score_reduction_pct': (before_metrics['top_ignorance_score'] - after_metrics['top_ignorance_score']) / before_metrics['top_ignorance_score'] * 100,
-        'open_rate_improvement': after_metrics['average_open_rate'] - before_metrics['average_open_rate']
+        "unread_improvement": before_metrics["unread_percentage"] - after_metrics["unread_percentage"],
+        "top_score_reduction": before_metrics["top_ignorance_score"] - after_metrics["top_ignorance_score"],
+        "top_score_reduction_pct": (before_metrics["top_ignorance_score"] - after_metrics["top_ignorance_score"]) / before_metrics["top_ignorance_score"] * 100,
+        "open_rate_improvement": after_metrics["average_open_rate"] - before_metrics["average_open_rate"],
     }
 
 
@@ -93,14 +94,14 @@ def generate_cleanup_report(df: pd.DataFrame, baseline_metrics: Optional[Dict] =
     report.append("")
 
     report.append("=== 🎯 CLEANUP RECOMMENDATIONS ===")
-    never_opened = df[df.open_rate == 0].nlargest(5, 'total_volume')
+    never_opened = df[df.open_rate == 0].nlargest(5, "total_volume")
     if not never_opened.empty:
         report.append("🗑️  Consider unsubscribing from these (0% open rate):")
         for _, row in never_opened.iterrows():
             report.append(f"   • {row['from']} ({int(row['total_volume'])} emails)")
         report.append("")
 
-    high_volume = df[df.total_volume >= 20].nlargest(5, 'ignorance_score')
+    high_volume = df[df.total_volume >= 20].nlargest(5, "ignorance_score")
     if not high_volume.empty:
         report.append("🎛️  Review these high-volume senders:")
         for _, row in high_volume.iterrows():
@@ -113,17 +114,54 @@ def generate_cleanup_report(df: pd.DataFrame, baseline_metrics: Optional[Dict] =
 def analyze_sender_email_patterns(sender_emails: List[str]) -> Tuple[List[str], List[str], List[str]]:
     """Analyze email subject patterns for a sender (valuable vs promotional)."""
     valuable_keywords = [
-        'credit score', 'score changed', 'score update', 'fico',
-        'spending category', 'top spending', 'transaction', 'deposit', 'pending transaction',
-        'balance', 'account', 'cash back', 'rewards', 'savings account',
-        'alert', 'security', 'login', 'password', 'bill', 'payment'
+        "credit score",
+        "score changed",
+        "score update",
+        "fico",
+        "spending category",
+        "top spending",
+        "transaction",
+        "deposit",
+        "pending transaction",
+        "balance",
+        "account",
+        "cash back",
+        "rewards",
+        "savings account",
+        "alert",
+        "security",
+        "login",
+        "password",
+        "bill",
+        "payment",
     ]
 
     promotional_keywords = [
-        'loan', 'mortgage', 'insurance', 'car insurance', 'advisor', 'financial advisor',
-        'credit card', 'intro apr', 'interest rate', 'approved fast', 'heloc', 'refinance',
-        'high-yield', 'comparison', 'rate', 'offer', 'deal', 'apply', 'application',
-        'survey', 'feedback', 'review', 'newsletter', 'tips', 'guide'
+        "loan",
+        "mortgage",
+        "insurance",
+        "car insurance",
+        "advisor",
+        "financial advisor",
+        "credit card",
+        "intro apr",
+        "interest rate",
+        "approved fast",
+        "heloc",
+        "refinance",
+        "high-yield",
+        "comparison",
+        "rate",
+        "offer",
+        "deal",
+        "apply",
+        "application",
+        "survey",
+        "feedback",
+        "review",
+        "newsletter",
+        "tips",
+        "guide",
     ]
 
     valuable_emails = []
@@ -144,10 +182,4 @@ def analyze_sender_email_patterns(sender_emails: List[str]) -> Tuple[List[str], 
 
 
 # Baseline metrics from the start of cleanup (for comparison)
-BASELINE_METRICS = {
-    'total_emails': 1974,
-    'unread_percentage': 80.1,
-    'average_open_rate': 12.0,
-    'senders_never_opened': 313,
-    'top_ignorance_score': 8300
-}
+BASELINE_METRICS = {"total_emails": 1974, "unread_percentage": 80.1, "average_open_rate": 12.0, "senders_never_opened": 313, "top_ignorance_score": 8300}
