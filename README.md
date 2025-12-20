@@ -30,32 +30,41 @@ uv sync
 
 ```bash
 # Run a full email audit (requires Gmail API setup)
-uv run python scripts/run_audit.py --max-emails 2000
+uv run python scripts/mailprune.py audit --max-emails 2000
 ```
 
 ### Analyzing Audit Results
 
 ```bash
 # Generate comprehensive cleanup report
-uv run python scripts/analyze_emails.py report
+uv run python scripts/mailprune.py report
 
 # Show top noise makers
-uv run python scripts/analyze_emails.py top-noise --n 10
+uv run python scripts/mailprune.py top-noise --n 10
 
 # Get overall email metrics
-uv run python scripts/analyze_emails.py metrics
+uv run python scripts/mailprune.py metrics
 
 # Analyze specific sender
-uv run python scripts/analyze_emails.py sender "newsletter@company.com"
+uv run python scripts/mailprune.py sender "newsletter@company.com"
 
 # Analyze title patterns for top senders
-uv run python scripts/analyze_emails.py title-patterns --top-n 3
+uv run python scripts/mailprune.py title-patterns --top-n 3
 
 # Analyze title patterns for top problematic senders (by ignorance score)
-uv run python scripts/analyze_emails.py problematic-titles --top-n 5
+uv run python scripts/mailprune.py problematic-titles --top-n 5
 
 # Show cleanup progress
-uv run python scripts/analyze_emails.py progress
+uv run python scripts/mailprune.py progress
+
+# Show email distribution summary
+uv run python scripts/mailprune.py summary
+
+# Analyze sender engagement patterns
+uv run python scripts/mailprune.py engagement
+
+# Show top senders by volume
+uv run python scripts/mailprune.py top-volume --top-n 10
 ```
 
 ## Testing
@@ -103,8 +112,9 @@ mailprune/
 │   ├── utils.py          # Utility functions
 │   └── constants.py      # Constants and configuration
 ├── scripts/               # Executable scripts
-│   ├── run_audit.py      # Audit runner
-│   ├── analyze_emails.py # Analysis CLI
+│   ├── mailprune.py      # Unified audit and analysis CLI
+│   ├── run_audit.py      # Legacy audit runner (deprecated)
+│   ├── analyze_emails.py # Legacy analysis CLI (deprecated)
 │   └── run_tests.py      # Test runner
 ├── tests/                 # Test suite
 │   ├── test_analysis.py  # Analysis function tests
