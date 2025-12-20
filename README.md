@@ -9,6 +9,8 @@ Intelligent email management system that audits Gmail, identifies noise makers u
 - **Cleanup Recommendations**: Provides actionable suggestions for unsubscribing and filtering
 - **Progress Tracking**: Monitors cleanup effectiveness with baseline comparisons
 - **Cache Pruning**: Automatically removes deleted emails from local cache between audit runs
+- **Parallel Processing**: Uses service pool for concurrent Gmail API calls to speed up auditing
+- **Title Pattern Analysis**: Analyzes email subject patterns for senders to understand content themes
 - **CLI Tools**: Command-line interface for easy analysis and reporting
 
 ## Installation
@@ -48,6 +50,9 @@ uv run python scripts/analyze_emails.py sender "newsletter@company.com"
 
 # Analyze title patterns for top senders
 uv run python scripts/analyze_emails.py title-patterns --top-n 3
+
+# Analyze title patterns for top problematic senders (by ignorance score)
+uv run python scripts/analyze_emails.py problematic-titles --top-n 5
 
 # Show cleanup progress
 uv run python scripts/analyze_emails.py progress

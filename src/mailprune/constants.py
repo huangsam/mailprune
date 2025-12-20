@@ -23,7 +23,9 @@ class GmailLabels:
     # Can be manually applied.
     IMPORTANT = "IMPORTANT"
 
-    # Cannot be manually applied. Applied automatically to messages that are sent with drafts.send or messages.send, inserted with messages.insert and the user's email in the From header, or sent by the user through the web interface.
+    # Cannot be manually applied. Applied automatically to messages that are sent with drafts.send or
+    # messages.send, inserted with messages.insert and the user's email in the From header, or sent by the
+    # user through the web interface.
     SENT = "SENT"
 
     # Cannot be manually applied. Automatically applied to all draft messages created with the Gmail API or Gmail interface.

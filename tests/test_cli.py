@@ -5,15 +5,15 @@ Tests for mailprune CLI commands.
 import sys
 from pathlib import Path
 
-import pytest
-from click.testing import CliRunner
-
 # Add the src directory to the path so we can import mailprune
 project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
-from scripts.analyze_emails import cli
+import pytest  # noqa: E402
+from click.testing import CliRunner  # noqa: E402
+
+from scripts.analyze_emails import cli  # noqa: E402
 
 
 @pytest.fixture

@@ -5,15 +5,15 @@ Tests for mailprune analysis functions.
 import sys
 from pathlib import Path
 
-import pandas as pd
-import pytest
-
 # Add the src directory to the path so we can import mailprune
 project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
-from mailprune import (
+import pandas as pd  # noqa: E402
+import pytest  # noqa: E402
+
+from mailprune import (  # noqa: E402
     BASELINE_METRICS,
     analyze_sender_email_patterns,
     analyze_sender_patterns,

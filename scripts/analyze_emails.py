@@ -9,14 +9,21 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-import click
-
 # Add the src directory to the path so we can import mailprune
 project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
-from mailprune import BASELINE_METRICS, analyze_sender_patterns, calculate_overall_metrics, generate_cleanup_report, get_top_noise_makers, load_audit_data
+import click  # noqa: E402
+
+from mailprune import (  # noqa: E402
+    BASELINE_METRICS,
+    analyze_sender_patterns,
+    calculate_overall_metrics,
+    generate_cleanup_report,
+    get_top_noise_makers,
+    load_audit_data,
+)
 
 
 @click.group()
@@ -191,6 +198,111 @@ def title_patterns(cache_path: str, top_n: int):
                 click.echo(f"  • {word}: {count}")
         else:
             click.echo("No significant words found in subjects")
+
+
+@cli.command()
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
+@click.option("--cache-path", default="data/email_cache.json", help="Path to the email cache file")
+@click.option("--top-n", default=5, help="Number of top problematic senders to analyze")
+def problematic_titles(csv_path: str, cache_path: str, top_n: int):
+    """Analyze title patterns for top problematic senders (by ignorance score)."""
+    # Load CSV to get top noise makers
+    df = load_audit_data(csv_path)
+    if df.empty:
+        click.echo(f"Error: {csv_path} not found. Run audit first.")
+        return
+
+    # Get top problematic senders by ignorance score
+    top_problematic = get_top_noise_makers(df, top_n)
+    problematic_senders = set(top_problematic["from"].tolist())
+
+    # Load cache to analyze their email subjects
+    try:
+        with open(cache_path, "r") as f:
+            cache = json.load(f)
+    except FileNotFoundError:
+        click.echo(f"Error: {cache_path} not found. Run audit first.")
+        return
+
+    # Group subjects by sender (only for problematic senders)
+    sender_subjects = defaultdict(list)
+    for email in cache.values():
+        headers = email.get("payload", {}).get("headers", [])
+        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
+        if sender in problematic_senders:
+            subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
+            sender_subjects[sender].append(subject)
+
+    click.echo(f"=== 🚨 TITLE PATTERNS FOR TOP {top_n} PROBLEMATIC SENDERS ===")
+    click.echo("(Ranked by ignorance score - high volume + low engagement)")
+    click.echo()
+
+    for _, row in top_problematic.iterrows():
+        sender = row["from"]
+        subjects = sender_subjects.get(sender, [])
+
+        if not subjects:
+            click.echo(f"## {sender}")
+            click.echo("No cached emails found for this sender")
+            continue
+
+        click.echo(f"## {sender} ({len(subjects)} emails, Score: {row['ignorance_score']:.0f})")
+
+        # Analyze common words in subjects
+        words = []
+        for subj in subjects:
+            # Split subject and filter out short/common words
+            subj_words = [
+                word.lower()
+                for word in subj.split()
+                if len(word) > 3
+                and word.lower()
+                not in [
+                    "with",
+                    "from",
+                    "your",
+                    "this",
+                    "that",
+                    "have",
+                    "been",
+                    "will",
+                    "they",
+                    "their",
+                    "there",
+                    "here",
+                    "when",
+                    "where",
+                    "what",
+                    "which",
+                    "then",
+                    "than",
+                    "into",
+                    "onto",
+                    "over",
+                    "under",
+                    "after",
+                    "before",
+                    "while",
+                    "since",
+                    "until",
+                    "through",
+                    "during",
+                    "between",
+                    "among",
+                    "within",
+                ]
+            ]
+            words.extend(subj_words)
+
+        if words:
+            word_counts = Counter(words).most_common(10)
+            click.echo("Common words in subjects:")
+            for word, count in word_counts:
+                click.echo(f"  • {word}: {count}")
+        else:
+            click.echo("No significant words found in subjects")
+
+        click.echo()
 
 
 if __name__ == "__main__":
