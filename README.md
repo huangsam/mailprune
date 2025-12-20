@@ -46,6 +46,9 @@ uv run python scripts/analyze_emails.py metrics
 # Analyze specific sender
 uv run python scripts/analyze_emails.py sender "newsletter@company.com"
 
+# Analyze title patterns for top senders
+uv run python scripts/analyze_emails.py title-patterns --top-n 3
+
 # Show cleanup progress
 uv run python scripts/analyze_emails.py progress
 ```

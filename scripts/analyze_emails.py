@@ -4,7 +4,9 @@ Email Analysis Script for mailprune.
 Provides various analysis functions for email audit data.
 """
 
+import json
 import sys
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import click
@@ -107,6 +109,88 @@ def progress(csv_path: str):
     click.echo(f"📉 Unread Rate Improvement: {unread_improvement:.1f}%")
     click.echo(f"🎯 Top Score Reduction: {top_score_reduction:.0f} ({top_score_reduction_pct:.0f}%)")
     click.echo(f"📈 Open Rate Improvement: {open_rate_improvement:.1f}%")
+
+
+@cli.command()
+@click.option("--cache-path", default="data/email_cache.json", help="Path to the email cache file")
+@click.option("--top-n", default=3, help="Number of top senders to analyze")
+def title_patterns(cache_path: str, top_n: int):
+    """Analyze title patterns for top senders."""
+    try:
+        with open(cache_path, "r") as f:
+            cache = json.load(f)
+    except FileNotFoundError:
+        click.echo(f"Error: {cache_path} not found. Run audit first.")
+        return
+
+    # Group by sender and collect subjects
+    sender_subjects = defaultdict(list)
+    for email in cache.values():
+        headers = email.get("payload", {}).get("headers", [])
+        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
+        subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
+        sender_subjects[sender].append(subject)
+
+    # Get top senders by volume
+    top_senders = sorted(sender_subjects.items(), key=lambda x: len(x[1]), reverse=True)[:top_n]
+
+    click.echo(f"=== 📧 TITLE PATTERNS FOR TOP {top_n} SENDERS ===")
+    for sender, subjects in top_senders:
+        click.echo(f"\n## {sender} ({len(subjects)} emails)")
+
+        # Analyze common words in subjects
+        words = []
+        for subj in subjects:
+            # Split subject and filter out short/common words
+            subj_words = [
+                word.lower()
+                for word in subj.split()
+                if len(word) > 3
+                and word.lower()
+                not in [
+                    "with",
+                    "from",
+                    "your",
+                    "this",
+                    "that",
+                    "have",
+                    "been",
+                    "will",
+                    "they",
+                    "their",
+                    "there",
+                    "here",
+                    "when",
+                    "where",
+                    "what",
+                    "which",
+                    "then",
+                    "than",
+                    "into",
+                    "onto",
+                    "over",
+                    "under",
+                    "after",
+                    "before",
+                    "while",
+                    "since",
+                    "until",
+                    "through",
+                    "during",
+                    "between",
+                    "among",
+                    "within",
+                ]
+            ]
+            words.extend(subj_words)
+
+        if words:
+            word_counts = Counter(words).most_common(10)
+            click.echo("Common words in subjects:")
+            for word, count in word_counts:
+                click.echo(f"  • {word}: {count}")
+        else:
+            click.echo("No significant words found in subjects")
 
 
 if __name__ == "__main__":
