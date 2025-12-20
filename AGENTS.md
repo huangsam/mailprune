@@ -8,10 +8,19 @@ This document provides information specifically for AI agents and automated tool
 mailprune/
 ├── src/mailprune/          # Core package
 │   ├── __init__.py        # Package exports
-│   ├── analysis.py        # Analysis functions
-│   ├── audit.py          # Gmail API integration
-│   ├── utils.py          # Utility functions
-│   └── constants.py      # Constants and configuration
+│   ├── commands/          # CLI command implementations
+│   │   ├── __init__.py   # Command package exports
+│   │   ├── engagement.py # Engagement analysis command
+│   │   ├── report.py     # Comprehensive report command
+│   │   ├── summary.py    # Summary statistics command
+│   │   ├── title_patterns.py # Title pattern analysis command
+│   │   └── unread_by_category.py # Unread by category command
+│   └── utils/             # Utility modules
+│       ├── __init__.py   # Utils package exports
+│       ├── analysis.py   # Email analysis functions
+│       ├── audit.py      # Gmail API integration
+│       ├── constants.py  # Constants and configuration
+│       └── helpers.py    # General utility functions
 ├── scripts/               # Executable scripts
 │   ├── __init__.py       # Package marker
 │   └── mailprune.py      # Unified audit and analysis CLI
@@ -20,9 +29,16 @@ mailprune/
 │   ├── test_analysis.py  # Analysis function tests
 │   └── test_cli.py       # CLI command tests
 ├── data/                  # Data files and cache
+│   ├── credentials.json  # Gmail API credentials
+│   ├── email_cache.json  # Cached email metadata
+│   ├── google-details.txt # Gmail API configuration
+│   ├── noise_report.csv  # Generated audit results
+│   └── token.json        # Gmail API authentication token
 ├── brainstorm/            # Development planning and notes
 │   └── initial-plan.md   # Initial project planning document
-└── pyproject.toml         # Project configuration and dependencies
+├── pyproject.toml         # Project configuration and dependencies
+├── uv.lock               # Dependency lock file
+└── AGENTS.md             # This documentation
 ```
 
 ## Installation & Setup
@@ -73,10 +89,17 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 ## Key Files for Agents
 
 ### Core Modules
-- `src/mailprune/analysis.py` - Contains all analysis functions and metrics calculations
-- `src/mailprune/audit.py` - Gmail API integration and audit execution
-- `src/mailprune/constants.py` - Configuration constants and baseline metrics
-- `src/mailprune/utils.py` - Utility functions for data loading and processing
+- `src/mailprune/utils/analysis.py` - Contains all analysis functions and metrics calculations
+- `src/mailprune/utils/audit.py` - Gmail API integration and audit execution
+- `src/mailprune/utils/constants.py` - Configuration constants and baseline metrics
+- `src/mailprune/utils/helpers.py` - General utility functions for data loading and processing
+
+### Command Modules
+- `src/mailprune/commands/report.py` - Comprehensive email audit report generation
+- `src/mailprune/commands/summary.py` - Email distribution summary statistics
+- `src/mailprune/commands/engagement.py` - Sender engagement pattern analysis
+- `src/mailprune/commands/title_patterns.py` - Title pattern analysis for senders
+- `src/mailprune/commands/unread_by_category.py` - Unread email analysis by Gmail categories
 
 ### CLI Entry Points
 - `scripts/mailprune.py` - Main unified CLI tool with all commands
