@@ -11,6 +11,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from .constants import GmailLabels
+from .utils import load_email_cache, save_email_cache
 
 logger = logging.getLogger(__name__)
 
@@ -38,28 +39,47 @@ def perform_audit(max_emails: int = 2000) -> None:
     if not service:
         return
 
+    # Load existing cache
+    email_cache = load_email_cache()
+    logger.info(f"Loaded {len(email_cache)} emails from cache")
+
     logger.info(f"Starting audit of the last {max_emails} emails...")
     results: Dict[str, Any] = service.users().messages().list(userId="me", maxResults=max_emails).execute()
     messages: List[Dict[str, str]] = results.get("messages", [])
     fetch_time: float = time.time()
-    logger.info(f"Fetched {len(messages)} messages in {fetch_time - start_time:.2f}s")
+    logger.info(f"Fetched {len(messages)} message IDs in {fetch_time - start_time:.2f}s")
 
     data: List[Dict[str, Any]] = []
     now: datetime = datetime.now(timezone.utc)
-    for m in messages:
-        msg: Dict[str, Any] = (
-            service.users()
-            .messages()
-            .get(
-                userId="me",
-                id=m["id"],
-                format="metadata",
-                metadataHeaders=["From", "Subject", "Date"],
-            )
-            .execute()
-        )
+    fetched_count = 0
 
-        headers: List[Dict[str, str]] = msg.get("payload", {}).get("headers", [])
+    for m in messages:
+        msg_id = m["id"]
+        if msg_id in email_cache:
+            # Use cached data
+            cached_msg = email_cache[msg_id]
+            logger.debug(f"Using cached data for message {msg_id}")
+        else:
+            # Fetch from API
+            msg: Dict[str, Any] = (
+                service.users()
+                .messages()
+                .get(
+                    userId="me",
+                    id=msg_id,
+                    format="metadata",
+                    metadataHeaders=["From", "Subject", "Date"],
+                )
+                .execute()
+            )
+            fetched_count += 1
+            # Cache the raw message data
+            email_cache[msg_id] = msg
+            cached_msg = msg
+            logger.debug(f"Fetched and cached message {msg_id}")
+
+        # Process the message (same as before)
+        headers: List[Dict[str, str]] = cached_msg.get("payload", {}).get("headers", [])
         from_header: str = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
         subject: str = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
         date_str: str = next((h["value"] for h in headers if h["name"] == "Date"), "Unknown")
@@ -73,18 +93,18 @@ def perform_audit(max_emails: int = 2000) -> None:
             pass  # Skip invalid dates
 
         # Check if unread
-        labels: List[str] = msg.get("labelIds", [])
+        labels: List[str] = cached_msg.get("labelIds", [])
         is_unread: bool = GmailLabels.UNREAD in labels
         is_starred: bool = GmailLabels.STARRED in labels
         is_important: bool = GmailLabels.IMPORTANT in labels
         is_social: bool = GmailLabels.CATEGORY_SOCIAL in labels
         is_updates: bool = GmailLabels.CATEGORY_UPDATES in labels
         is_promotions: bool = GmailLabels.CATEGORY_PROMOTIONS in labels
-        logger.debug(f"Email ID: {m['id']}, From: {from_header}, Subject: {subject}, Date: {date_str}")
+        logger.debug(f"Email ID: {msg_id}, From: {from_header}, Subject: {subject}, Date: {date_str}")
 
         # Build data row for a single email
         row: Dict[str, Any] = {
-            "id": m["id"],
+            "id": msg_id,
             "unread": is_unread,
             "starred": is_starred,
             "important": is_important,
@@ -99,7 +119,10 @@ def perform_audit(max_emails: int = 2000) -> None:
         data.append(row)
 
     process_time: float = time.time()
-    logger.info(f"Processed {len(data)} emails into data in {process_time - fetch_time:.2f}s")
+    logger.info(f"Processed {len(data)} emails ({fetched_count} fetched from API, {len(data) - fetched_count} from cache) in {process_time - fetch_time:.2f}s")
+
+    # Save updated cache
+    save_email_cache(email_cache)
 
     # Process with Pandas
     df: pd.DataFrame = pd.DataFrame(data)
@@ -116,6 +139,7 @@ def perform_audit(max_emails: int = 2000) -> None:
             unread_count=("unread", "sum"),
             starred_count=("starred", "sum"),
             important_count=("important", "sum"),
+            social_count=("social", "sum"),
             updates_count=("updates", "sum"),
             promotions_count=("promotions", "sum"),
             avg_recency_days=("age_days", "mean"),
