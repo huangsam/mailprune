@@ -397,5 +397,21 @@ def engagement(csv_path: str):
         click.echo()
 
 
+@cli.command()
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
+@click.option("--top-n", default=10, help="Number of top senders to show")
+def top_volume(csv_path: str, top_n: int):
+    """Show the top N senders by email volume."""
+    df = load_audit_data(csv_path)
+    if df.empty:
+        return
+
+    click.echo(f"=== 📈 TOP {top_n} SENDERS BY VOLUME ===")
+    top_volume_senders = df.nlargest(top_n, "total_volume")[["from", "total_volume", "open_rate", "ignorance_score"]]
+
+    for _, row in top_volume_senders.iterrows():
+        click.echo(f"{row['from']:<50} | Vol: {int(row['total_volume']):3d} | Open: {row['open_rate']:5.1f}% | Score: {row['ignorance_score']:6.0f}")
+
+
 if __name__ == "__main__":
     cli()
