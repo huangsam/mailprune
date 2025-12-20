@@ -11,7 +11,7 @@ from pathlib import Path
 import click
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Add the src directory to the path so we can import mailprune

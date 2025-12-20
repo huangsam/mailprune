@@ -20,6 +20,7 @@ SCOPES: List[str] = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 
 def get_gmail_service() -> Optional[Any]:
+    """Authenticate and return a Gmail API service instance."""
     creds: Optional[Credentials] = None
     token_path = "data/token.json"
     if os.path.exists(token_path):
@@ -34,6 +35,17 @@ def get_gmail_service() -> Optional[Any]:
 
 
 def perform_audit(max_emails: int = 2000) -> Optional[pd.DataFrame]:
+    """Perform Phase 1 Email Audit.
+
+    The steps are as follows:
+
+    1. Fetch the last N emails from Gmail API.
+    2. Cache email metadata locally to avoid redundant API calls.
+    3. Process emails to extract sender, date, labels.
+    4. Aggregate by sender to compute total volume, open rate, average recency.
+    5. Calculate an "ignorance score" to identify potential noise makers.
+    6. Save the audit report to data/noise_report.csv.
+    """
     start_time: float = time.time()
     service: Optional[Any] = get_gmail_service()
     if not service:
@@ -44,8 +56,36 @@ def perform_audit(max_emails: int = 2000) -> Optional[pd.DataFrame]:
     logger.info(f"Loaded {len(email_cache)} emails from cache")
 
     logger.info(f"Starting audit of the last {max_emails} emails...")
-    results: Dict[str, Any] = service.users().messages().list(userId="me", maxResults=max_emails).execute()
-    messages: List[Dict[str, str]] = results.get("messages", [])
+
+    # Fetch message IDs with pagination (Gmail API limits to 500 per request)
+    messages: List[Dict[str, str]] = []
+    page_token: Optional[str] = None
+    remaining_emails = max_emails
+
+    while len(messages) < max_emails:
+        # Gmail API maxResults is 500, so we take min of remaining_emails and 500
+        batch_size = min(remaining_emails, 500)
+
+        request_params = {"userId": "me", "maxResults": batch_size}
+        if page_token:
+            request_params["pageToken"] = page_token
+
+        results: Dict[str, Any] = service.users().messages().list(**request_params).execute()
+        batch_messages: List[Dict[str, str]] = results.get("messages", [])
+
+        messages.extend(batch_messages)
+        logger.debug(f"Fetched batch of {len(batch_messages)} message IDs (total: {len(messages)})")
+
+        # Check if there are more pages
+        page_token = results.get("nextPageToken")
+        if not page_token:
+            # No more pages available
+            break
+
+        remaining_emails = max_emails - len(messages)
+        if remaining_emails <= 0:
+            break
+
     fetch_time: float = time.time()
     logger.info(f"Fetched {len(messages)} message IDs in {fetch_time - start_time:.2f}s")
 
