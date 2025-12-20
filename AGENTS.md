@@ -90,10 +90,10 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 ## Key Files for Agents
 
 ### Core Modules
-- `src/mailprune/utils/analysis.py` - Contains all analysis functions and metrics calculations
-- `src/mailprune/utils/audit.py` - Gmail API integration and low-level audit utilities
+- `src/mailprune/utils/analysis.py` - Email analysis, metrics calculations, and text processing functions
+- `src/mailprune/utils/audit.py` - Gmail API integration, data extraction, and low-level audit utilities
 - `src/mailprune/utils/constants.py` - Configuration constants and baseline metrics
-- `src/mailprune/utils/helpers.py` - General utility functions for data loading and processing
+- `src/mailprune/utils/helpers.py` - General utility functions for data I/O, formatting, and calculations
 
 ### Command Modules
 - `src/mailprune/commands/audit.py` - High-level audit execution command
