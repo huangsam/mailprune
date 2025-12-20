@@ -17,12 +17,13 @@ from mailprune.utils.audit import (
     save_report,
     setup_audit,
 )
+from mailprune.utils.constants import DEFAULT_MAX_EMAILS
 from mailprune.utils.helpers import save_email_cache
 
 logger = logging.getLogger(__name__)
 
 
-def perform_audit(max_emails: int = 2000) -> Optional[pd.DataFrame]:
+def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS) -> Optional[pd.DataFrame]:
     """Perform Phase 1 Email Audit.
 
     The steps are as follows:

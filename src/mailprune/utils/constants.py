@@ -45,3 +45,24 @@ class GmailLabels:
 
     # Can be manually applied. Corresponds to messages that are displayed in the Forums tab of the Gmail interface.
     CATEGORY_FORUMS = "CATEGORY_FORUMS"
+
+
+# File paths
+DEFAULT_CSV_PATH = "data/noise_report.csv"
+DEFAULT_CACHE_PATH = "data/email_cache.json"
+DEFAULT_CREDENTIALS_PATH = "data/credentials.json"
+DEFAULT_TOKEN_PATH = "data/token.json"
+
+# Gmail API configuration
+GMAIL_API_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+GMAIL_API_SERVICE_NAME = "gmail"
+GMAIL_API_VERSION = "v1"
+
+# Analysis thresholds
+ENGAGEMENT_HIGH_THRESHOLD = 80
+ENGAGEMENT_MEDIUM_THRESHOLD = 50
+ENGAGEMENT_LOW_THRESHOLD = 1
+
+# Audit defaults
+DEFAULT_MAX_EMAILS = 2000
+DEFAULT_POOL_SIZE = 5

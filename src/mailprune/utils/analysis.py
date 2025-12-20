@@ -7,8 +7,10 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from .constants import DEFAULT_CSV_PATH, ENGAGEMENT_HIGH_THRESHOLD, ENGAGEMENT_LOW_THRESHOLD, ENGAGEMENT_MEDIUM_THRESHOLD
 
-def load_audit_data(csv_path: str = "data/noise_report.csv") -> pd.DataFrame:
+
+def load_audit_data(csv_path: str = DEFAULT_CSV_PATH) -> pd.DataFrame:
     """Load the email audit data from CSV."""
     try:
         return pd.read_csv(csv_path)
@@ -25,9 +27,9 @@ def get_top_noise_makers(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
 def get_engagement_tiers(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     """Get engagement tier dataframes."""
     return {
-        "high": df[df["open_rate"] >= 80],
-        "medium": df[(df["open_rate"] >= 50) & (df["open_rate"] < 80)],
-        "low": df[(df["open_rate"] > 0) & (df["open_rate"] < 50)],
+        "high": df[df["open_rate"] >= ENGAGEMENT_HIGH_THRESHOLD],
+        "medium": df[(df["open_rate"] >= ENGAGEMENT_MEDIUM_THRESHOLD) & (df["open_rate"] < ENGAGEMENT_HIGH_THRESHOLD)],
+        "low": df[(df["open_rate"] >= ENGAGEMENT_LOW_THRESHOLD) & (df["open_rate"] < ENGAGEMENT_MEDIUM_THRESHOLD)],
         "zero": df[df["open_rate"] == 0],
     }
 

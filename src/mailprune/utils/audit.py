@@ -13,26 +13,23 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-from .constants import GmailLabels
+from .constants import DEFAULT_POOL_SIZE, DEFAULT_TOKEN_PATH, GMAIL_API_SCOPES, GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, GmailLabels
 from .helpers import load_email_cache
 
 logger = logging.getLogger(__name__)
-
-# Same scopes as the sanity check
-SCOPES: List[str] = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 
 class GmailServicePool:
     """Thread-safe pool of Gmail API service instances."""
 
-    def __init__(self, token_path: str, pool_size: int = 5):
+    def __init__(self, token_path: str, pool_size: int = DEFAULT_POOL_SIZE):
         self.pool: queue.Queue[Any] = queue.Queue(maxsize=pool_size)
-        self.creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+        self.creds = Credentials.from_authorized_user_file(token_path, GMAIL_API_SCOPES)
 
         # Pre-initialize the pool with authorized service instances
         for _ in range(pool_size):
             # Each thread must have its own service instance
-            service = build("gmail", "v1", credentials=self.creds)
+            service = build(GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, credentials=self.creds)
             self.pool.put(service)
 
     def get_service(self):
@@ -47,26 +44,24 @@ class GmailServicePool:
 def get_gmail_service() -> Optional[Any]:
     """Authenticate and return a Gmail API service instance."""
     creds: Optional[Credentials] = None
-    token_path = "data/token.json"
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    if os.path.exists(DEFAULT_TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(DEFAULT_TOKEN_PATH, GMAIL_API_SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             logger.error("Valid token.json not found in data/. Run main.py to authenticate.")
             return None
-    return build("gmail", "v1", credentials=creds)
+    return build(GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, credentials=creds)
 
 
 def setup_audit() -> Tuple[GmailServicePool, Dict[str, Any]]:
     """Set up service pool and load email cache for audit."""
-    token_path = "data/token.json"
-    if not os.path.exists(token_path):
+    if not os.path.exists(DEFAULT_TOKEN_PATH):
         logger.error("Valid token.json not found in data/. Run main.py to authenticate.")
         raise FileNotFoundError("token.json not found")
 
-    service_pool = GmailServicePool(token_path, pool_size=5)
+    service_pool = GmailServicePool(DEFAULT_TOKEN_PATH, pool_size=DEFAULT_POOL_SIZE)
     email_cache = load_email_cache()
     logger.info(f"Loaded {len(email_cache)} emails from cache")
     return service_pool, email_cache
