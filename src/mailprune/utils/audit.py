@@ -155,7 +155,26 @@ def fetch_uncached_messages(service_pool: GmailServicePool, email_cache: Dict[st
 
 
 def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]) -> List[Dict[str, Any]]:
-    """Process messages to extract metadata."""
+    """Process cached email messages to extract metadata for analysis.
+
+    Extracts relevant fields from Gmail API response data including sender,
+    subject, date, labels, and calculates email age. This prepares the data
+    for aggregation and scoring.
+
+    Args:
+        email_cache: Dictionary mapping message IDs to cached Gmail API responses
+        messages: List of message dictionaries with 'id' keys
+
+    Returns:
+        List of dictionaries with extracted email metadata:
+            - id: Message ID
+            - from: Sender email address
+            - subject: Email subject line
+            - date: Original date string
+            - age_days: Days since email was sent (None if unparseable)
+            - unread/starred/important: Boolean label flags
+            - social/updates/promotions: Boolean category flags
+    """
     data: List[Dict[str, Any]] = []
     now: datetime = datetime.now(timezone.utc)
 
@@ -218,7 +237,34 @@ def prune_cache(email_cache: Dict[str, Any], current_email_ids: Set[str]) -> int
 
 
 def aggregate_and_score(df: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate email data by sender and calculate ignorance scores."""
+    """Aggregate email data by sender and calculate ignorance scores.
+
+    Groups emails by sender and computes various metrics including an "ignorance score"
+    that combines email volume with unread percentage to identify potential noise makers.
+
+    The ignorance score is calculated as: volume × (100 - open_rate)
+    This gives higher scores to senders who send many emails that remain unread.
+
+    Args:
+        df: DataFrame with individual email data containing columns:
+            - from: Sender email address
+            - id: Email ID (for counting)
+            - unread: Boolean indicating if email is unread
+            - starred: Boolean for starred status
+            - important: Boolean for important status
+            - social/updates/promotions: Boolean for category labels
+            - age_days: Days since email was sent
+
+    Returns:
+        DataFrame aggregated by sender with columns:
+            - from: Sender email address
+            - total_volume: Total emails from this sender
+            - unread_count: Number of unread emails
+            - starred_count/important_count/social_count/etc.: Category counts
+            - avg_recency_days: Average age of emails in days
+            - open_rate: Percentage of emails that were opened (100 - unread%)
+            - ignorance_score: Calculated noise score (higher = more problematic)
+    """
     # Filter out rows with invalid dates
     df = df.dropna(subset=["age_days"])
     logger.info(f"Filtered to {len(df)} valid emails with parseable dates")

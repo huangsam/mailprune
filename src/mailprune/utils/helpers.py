@@ -76,7 +76,18 @@ def get_sender_subjects_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str
 
 
 def filter_common_words(words: List[str]) -> List[str]:
-    """Filter out common short words from subject analysis."""
+    """Filter out common English words and short words from subject analysis.
+
+    Removes common prepositions, articles, and conjunctions that don't provide
+    meaningful insight into email patterns. Also filters out words shorter
+    than 4 characters to focus on more significant terms.
+
+    Args:
+        words: List of words extracted from email subjects
+
+    Returns:
+        Filtered list of words suitable for pattern analysis
+    """
     common_words = {
         "with",
         "from",

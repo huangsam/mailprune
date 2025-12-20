@@ -33,12 +33,39 @@ def get_engagement_tiers(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 
 
 def get_top_senders_by_volume(sender_subjects: Dict[str, List[str]], top_n: int) -> List[Tuple[str, int]]:
-    """Get top senders by email volume."""
+    """Get top senders ranked by email volume.
+
+    Args:
+        sender_subjects: Dictionary mapping sender emails to lists of their subjects
+        top_n: Number of top senders to return
+
+    Returns:
+        List of (sender, email_count) tuples, sorted by volume descending
+    """
     return [(sender, len(subjects)) for sender, subjects in sorted(sender_subjects.items(), key=lambda x: len(x[1]), reverse=True)[:top_n]]
 
 
 def calculate_overall_metrics(df: pd.DataFrame) -> Dict[str, float]:
-    """Calculate overall email metrics."""
+    """Calculate overall email metrics from audit data.
+
+    Computes key statistics including total emails, unread percentage,
+    average open rate, and ignorance score metrics.
+
+    Args:
+        df: DataFrame containing audit data with columns:
+            - total_volume: Total emails per sender
+            - unread_count: Unread emails per sender
+            - open_rate: Open rate percentage per sender
+            - ignorance_score: Calculated ignorance score per sender
+
+    Returns:
+        Dictionary containing:
+            - total_emails: Sum of all email volumes
+            - unread_percentage: Percentage of unread emails
+            - average_open_rate: Mean open rate across all senders
+            - senders_never_opened: Count of senders with 0% open rate
+            - top_ignorance_score: Highest ignorance score
+    """
     total_emails = df.total_volume.sum()
     unread_pct = df.unread_count.sum() / total_emails * 100
     avg_open_rate = df.open_rate.mean()
@@ -71,7 +98,22 @@ def analyze_sender_patterns(df: pd.DataFrame, sender_name: str) -> Optional[Dict
 
 
 def compare_metrics(before_metrics: Dict, after_metrics: Dict) -> Dict:
-    """Compare metrics before and after cleanup."""
+    """Compare email metrics before and after cleanup actions.
+
+    Calculates improvements in key metrics to quantify the effectiveness
+    of email management actions.
+
+    Args:
+        before_metrics: Metrics dictionary from before cleanup
+        after_metrics: Metrics dictionary from after cleanup
+
+    Returns:
+        Dictionary with improvement metrics:
+            - unread_improvement: Reduction in unread percentage
+            - top_score_reduction: Absolute reduction in top ignorance score
+            - top_score_reduction_pct: Percentage reduction in top score
+            - open_rate_improvement: Increase in average open rate
+    """
     return {
         "unread_improvement": before_metrics["unread_percentage"] - after_metrics["unread_percentage"],
         "top_score_reduction": before_metrics["top_ignorance_score"] - after_metrics["top_ignorance_score"],
