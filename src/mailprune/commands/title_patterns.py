@@ -2,31 +2,24 @@
 Title patterns command implementation for MailPrune.
 """
 
-import json
-from collections import Counter, defaultdict
+from collections import Counter
 
 import click
 
 from mailprune import get_top_noise_makers, load_audit_data
+from mailprune.utils import filter_common_words, get_sender_subjects_from_cache, get_top_senders_by_volume, load_email_cache
 
 
 def analyze_title_patterns(cache_path: str, csv_path: str, top_n: int, by: str) -> None:
     """Analyze title patterns for top senders (by volume or ignorance score)."""
     # Load cache
-    try:
-        with open(cache_path, "r") as f:
-            cache = json.load(f)
-    except FileNotFoundError:
+    cache = load_email_cache()
+    if not cache:
         click.echo(f"Error: {cache_path} not found. Run audit first.")
         return
 
     # Group by sender and collect subjects
-    sender_subjects = defaultdict(list)
-    for email in cache.values():
-        headers = email.get("payload", {}).get("headers", [])
-        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
-        subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
-        sender_subjects[sender].append(subject)
+    sender_subjects = get_sender_subjects_from_cache(cache)
 
     # Select top senders based on ranking method
     if by == "ignorance":
@@ -43,8 +36,7 @@ def analyze_title_patterns(cache_path: str, csv_path: str, top_n: int, by: str) 
         subtitle = "(Ranked by ignorance score - high volume + low engagement)"
     else:  # by == "volume"
         # Get top senders by volume
-        top_senders = sorted(sender_subjects.items(), key=lambda x: len(x[1]), reverse=True)[:top_n]
-        selected_senders = [(sender, len(subjects)) for sender, subjects in top_senders]
+        selected_senders = get_top_senders_by_volume(sender_subjects, top_n)
         title = f"=== 📧 TITLE PATTERNS FOR TOP {top_n} SENDERS ==="
         subtitle = "(Ranked by email volume)"
 
@@ -70,47 +62,9 @@ def analyze_title_patterns(cache_path: str, csv_path: str, top_n: int, by: str) 
         words = []
         for subj in subjects:
             # Split subject and filter out short/common words
-            subj_words = [
-                word.lower()
-                for word in subj.split()
-                if len(word) > 3
-                and word.lower()
-                not in [
-                    "with",
-                    "from",
-                    "your",
-                    "this",
-                    "that",
-                    "have",
-                    "been",
-                    "will",
-                    "they",
-                    "their",
-                    "there",
-                    "here",
-                    "when",
-                    "where",
-                    "what",
-                    "which",
-                    "then",
-                    "than",
-                    "into",
-                    "onto",
-                    "over",
-                    "under",
-                    "after",
-                    "before",
-                    "while",
-                    "since",
-                    "until",
-                    "through",
-                    "during",
-                    "between",
-                    "among",
-                    "within",
-                ]
-            ]
-            words.extend(subj_words)
+            subj_words = subj.split()
+            filtered_words = filter_common_words(subj_words)
+            words.extend(filtered_words)
 
         if words:
             word_counts = Counter(words).most_common(10)

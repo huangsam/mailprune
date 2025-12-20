@@ -5,6 +5,7 @@ Engagement command implementation for MailPrune.
 import click
 
 from mailprune import load_audit_data
+from mailprune.utils import calculate_percentage, get_engagement_tier_names, get_engagement_tiers
 
 
 def analyze_engagement(csv_path: str, tier: str) -> None:
@@ -20,31 +21,30 @@ def analyze_engagement(csv_path: str, tier: str) -> None:
     click.echo()
 
     # Define engagement tiers
-    high_engagement = df[df["open_rate"] >= 80]
-    medium_engagement = df[(df["open_rate"] >= 50) & (df["open_rate"] < 80)]
-    low_engagement = df[(df["open_rate"] > 0) & (df["open_rate"] < 50)]
-    zero_engagement = df[df["open_rate"] == 0]
+    engagement_tiers = get_engagement_tiers(df)
+    tier_names = get_engagement_tier_names()
 
     tiers = [
-        ("High Engagement (80-100%)", high_engagement),
-        ("Medium Engagement (50-79%)", medium_engagement),
-        ("Low Engagement (1-49%)", low_engagement),
-        ("Zero Engagement (0%)", zero_engagement),
+        ("high", engagement_tiers["high"]),
+        ("medium", engagement_tiers["medium"]),
+        ("low", engagement_tiers["low"]),
+        ("zero", engagement_tiers["zero"]),
     ]
 
     # Show overview for all tiers or just the selected tier
     if tier == "all":
-        for tier_name, tier_df in tiers:
+        for tier_key, tier_df in tiers:
             if len(tier_df) > 0:
                 tier_emails = tier_df["total_volume"].sum()
                 tier_senders = len(tier_df)
                 avg_open_rate = tier_df["open_rate"].mean()
-                click.echo(f"🎯 {tier_name}:")
-                click.echo(f"  • {tier_senders} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
+                click.echo(f"🎯 {tier_names[tier_key]}:")
+                click.echo(f"  • {tier_senders} senders, {tier_emails} emails ({calculate_percentage(tier_emails, total_emails)})")
                 click.echo(f"  • Average open rate: {avg_open_rate:.1f}%")
                 click.echo()
 
         # Show top performers in high engagement tier
+        high_engagement = engagement_tiers["high"]
         if len(high_engagement) > 0:
             click.echo("🏆 Top High-Engagement Senders:")
             top_high = high_engagement.nlargest(3, "total_volume")
@@ -53,21 +53,18 @@ def analyze_engagement(csv_path: str, tier: str) -> None:
             click.echo()
     else:
         # Show detailed listing for specific tier
-        tier_map = {
-            "high": ("High Engagement (80-100%)", high_engagement),
-            "medium": ("Medium Engagement (50-79%)", medium_engagement),
-            "low": ("Low Engagement (1-49%)", low_engagement),
-            "zero": ("Zero Engagement (0%)", zero_engagement),
-        }
+        if tier not in engagement_tiers:
+            click.echo(f"Invalid tier: {tier}. Use 'high', 'medium', 'low', or 'zero'.")
+            return
 
-        tier_name, tier_df = tier_map[tier]
+        tier_df = engagement_tiers[tier]
         if len(tier_df) == 0:
-            click.echo(f"No senders found in {tier_name.lower()}.")
+            click.echo(f"No senders found in {tier_names[tier].lower()}.")
             return
 
         tier_emails = tier_df["total_volume"].sum()
-        click.echo(f"=== 🚫 {tier_name.upper()} SENDERS ===")
-        click.echo(f"Total: {len(tier_df)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
+        click.echo(f"=== 🚫 {tier_names[tier].upper()} SENDERS ===")
+        click.echo(f"Total: {len(tier_df)} senders, {tier_emails} emails ({calculate_percentage(tier_emails, total_emails)})")
         click.echo()
 
         # Sort by volume descending and show all senders in this tier

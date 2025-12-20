@@ -5,6 +5,7 @@ Report command implementation for MailPrune.
 import click
 
 from mailprune import BASELINE_METRICS, calculate_overall_metrics, get_top_noise_makers, load_audit_data
+from mailprune.utils import calculate_percentage, get_category_distribution, get_engagement_tier_names, get_engagement_tiers
 
 
 def generate_report(csv_path: str) -> None:
@@ -52,40 +53,28 @@ def generate_report(csv_path: str) -> None:
     high_volume_senders = len(df[df["total_volume"] > 50])
 
     report.append("📂 EMAIL DISTRIBUTION")
-    report.append(f"   • Top 10 Senders by Volume: {top_10_volume} emails ({top_10_volume / total_emails * 100:.1f}%)")
-    report.append(f"   • Top 10 Noise Makers: {top_10_noise} emails ({top_10_noise / total_emails * 100:.1f}%)")
-    report.append(f"   • Zero Engagement: {zero_open_senders} senders, {zero_open} emails ({zero_open / total_emails * 100:.1f}%)")
-    report.append(f"   • High Volume Senders (>50 emails): {high_volume_senders} senders, {high_volume} emails ({high_volume / total_emails * 100:.1f}%)")
+    report.append(f"   • Top 10 Senders by Volume: {top_10_volume} emails ({calculate_percentage(top_10_volume, total_emails)})")
+    report.append(f"   • Top 10 Noise Makers: {top_10_noise} emails ({calculate_percentage(top_10_noise, total_emails)})")
+    report.append(f"   • Zero Engagement: {zero_open_senders} senders, {zero_open} emails ({calculate_percentage(zero_open, total_emails)})")
+    report.append(
+        f"   • High Volume Senders (>50 emails): {high_volume_senders} senders, {high_volume} emails ({calculate_percentage(high_volume, total_emails)})"
+    )
     report.append("")
 
     # Engagement Breakdown
-    high_engagement = df[df["open_rate"] >= 80]
-    medium_engagement = df[(df["open_rate"] >= 50) & (df["open_rate"] < 80)]
-    low_engagement = df[(df["open_rate"] > 0) & (df["open_rate"] < 50)]
-    zero_engagement = df[df["open_rate"] == 0]
+    engagement_tiers = get_engagement_tiers(df)
+    tier_names = get_engagement_tier_names()
 
     report.append("🎯 ENGAGEMENT BREAKDOWN")
-    if len(high_engagement) > 0:
-        tier_emails = high_engagement["total_volume"].sum()
-        report.append(f"   • High Engagement (80-100%): {len(high_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
-    if len(medium_engagement) > 0:
-        tier_emails = medium_engagement["total_volume"].sum()
-        report.append(f"   • Medium Engagement (50-79%): {len(medium_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
-    if len(low_engagement) > 0:
-        tier_emails = low_engagement["total_volume"].sum()
-        report.append(f"   • Low Engagement (1-49%): {len(low_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
-    if len(zero_engagement) > 0:
-        tier_emails = zero_engagement["total_volume"].sum()
-        report.append(f"   • Zero Engagement (0%): {len(zero_engagement)} senders, {tier_emails} emails ({tier_emails / total_emails * 100:.1f}%)")
+    for tier_key, tier_df in engagement_tiers.items():
+        if len(tier_df) > 0:
+            tier_emails = tier_df["total_volume"].sum()
+            report.append(f"   • {tier_names[tier_key]}: {len(tier_df)} senders, {tier_emails} emails ({calculate_percentage(tier_emails, total_emails)})")
     report.append("")
 
     # Category Distribution
-    categories = ["updates_count", "promotions_count", "social_count", "important_count"]
     report.append("📂 EMAIL CATEGORIES")
-    for cat in categories:
-        total = df[cat].sum()
-        if total > 0:
-            report.append(f"   • {cat.replace('_count', '').title()}: {total} emails ({total / total_emails * 100:.1f}%)")
+    report.extend(get_category_distribution(df, total_emails))
     report.append("")
 
     # Top Noise Makers
@@ -115,6 +104,7 @@ def generate_report(csv_path: str) -> None:
         report.append("")
 
     # Top high-engagement senders
+    high_engagement = engagement_tiers["high"]
     if len(high_engagement) > 0:
         report.append("✅ KEEP: Your most engaged senders:")
         top_engaged = high_engagement.nlargest(3, "total_volume")

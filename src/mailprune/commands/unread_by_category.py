@@ -5,6 +5,7 @@ Unread by category command implementation for MailPrune.
 import click
 
 from mailprune import load_audit_data
+from mailprune.utils import calculate_percentage
 
 
 def analyze_unread_by_category(csv_path: str) -> None:
@@ -17,7 +18,7 @@ def analyze_unread_by_category(csv_path: str) -> None:
     total_emails = df["total_volume"].sum()
 
     click.echo("=== 📧 UNREAD EMAILS BY CATEGORY ===")
-    click.echo(f"Total Unread Emails: {int(total_unread)} out of {int(total_emails)} ({total_unread / total_emails * 100:.1f}%)")
+    click.echo(f"Total Unread Emails: {int(total_unread)} out of {int(total_emails)} ({calculate_percentage(total_unread, total_emails)})")
     click.echo()
 
     # Categories to analyze
