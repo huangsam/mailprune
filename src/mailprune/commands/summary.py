@@ -4,8 +4,7 @@ Summary command implementation for MailPrune.
 
 import click
 
-from mailprune import load_audit_data
-from mailprune.utils import calculate_percentage, get_category_distribution
+from mailprune.utils import calculate_percentage, get_category_distribution, load_audit_data
 
 
 def show_summary(csv_path: str) -> None:

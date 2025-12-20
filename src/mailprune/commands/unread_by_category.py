@@ -4,8 +4,7 @@ Unread by category command implementation for MailPrune.
 
 import click
 
-from mailprune import load_audit_data
-from mailprune.utils import calculate_percentage
+from mailprune.utils import calculate_percentage, load_audit_data
 
 
 def analyze_unread_by_category(csv_path: str) -> None:

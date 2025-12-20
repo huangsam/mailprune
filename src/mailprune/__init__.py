@@ -1,6 +1,6 @@
 # Mailprune package
 
-from .analysis import (
+from .utils import (
     BASELINE_METRICS,
     analyze_sender_email_patterns,
     analyze_sender_patterns,
@@ -9,6 +9,7 @@ from .analysis import (
     generate_cleanup_report,
     get_top_noise_makers,
     load_audit_data,
+    perform_audit,
 )
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "generate_cleanup_report",
     "get_top_noise_makers",
     "load_audit_data",
+    "perform_audit",
 ]
 
 __version__ = "0.1.0"

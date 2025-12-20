@@ -4,9 +4,12 @@ Engagement command implementation for MailPrune.
 
 import click
 
-from mailprune import load_audit_data
-from mailprune.analysis import get_engagement_tiers
-from mailprune.utils import calculate_percentage, get_engagement_tier_names
+from mailprune.utils import (
+    calculate_percentage,
+    get_engagement_tier_names,
+    get_engagement_tiers,
+    load_audit_data,
+)
 
 
 def analyze_engagement(csv_path: str, tier: str) -> None:

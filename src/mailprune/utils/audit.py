@@ -13,7 +13,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from .constants import GmailLabels
-from .utils import load_email_cache, save_email_cache
+from .helpers import load_email_cache, save_email_cache
 
 logger = logging.getLogger(__name__)
 

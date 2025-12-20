@@ -4,9 +4,16 @@ Report command implementation for MailPrune.
 
 import click
 
-from mailprune import BASELINE_METRICS, calculate_overall_metrics, get_top_noise_makers, load_audit_data
-from mailprune.analysis import get_engagement_tiers
-from mailprune.utils import calculate_percentage, get_category_distribution, get_engagement_tier_names
+from mailprune.utils import (
+    BASELINE_METRICS,
+    calculate_overall_metrics,
+    calculate_percentage,
+    get_category_distribution,
+    get_engagement_tier_names,
+    get_engagement_tiers,
+    get_top_noise_makers,
+    load_audit_data,
+)
 
 
 def generate_report(csv_path: str) -> None:
