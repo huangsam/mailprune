@@ -1,5 +1,9 @@
 class GmailLabels:
-    """GmailLabels contains Gmail system labels as constants."""
+    """GmailLabels contains Gmail system labels as constants.
+
+    You can find the full list of Gmail system labels here:
+    https://developers.google.com/workspace/gmail/api/guides/labels
+    """
 
     # Can be manually applied.
     INBOX = "INBOX"
