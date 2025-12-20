@@ -446,18 +446,22 @@ def engagement(csv_path: str):
 
 @cli.command()
 @click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
-@click.option("--top-n", default=10, help="Number of top senders to show")
-def top_volume(csv_path: str, top_n: int):
-    """Show the top N senders by email volume."""
+def zero_engagement(csv_path: str):
+    """Show all senders with zero engagement (0% open rate)."""
     df = load_audit_data(csv_path)
     if df.empty:
         return
 
-    click.echo(f"=== 📈 TOP {top_n} SENDERS BY VOLUME ===")
-    top_volume_senders = df.nlargest(top_n, "total_volume")[["from", "total_volume", "open_rate", "ignorance_score"]]
+    zero_engagement_senders = df[df["open_rate"] == 0.0].sort_values("total_volume", ascending=False)
+    total_zero_emails = zero_engagement_senders["total_volume"].sum()
+    total_emails = df["total_volume"].sum()
 
-    for _, row in top_volume_senders.iterrows():
-        click.echo(f"{row['from']:<50} | Vol: {int(row['total_volume']):3d} | Open: {row['open_rate']:5.1f}% | Score: {row['ignorance_score']:6.0f}")
+    click.echo("=== 🚫 ZERO ENGAGEMENT SENDERS ===")
+    click.echo(f"Total: {len(zero_engagement_senders)} senders, {total_zero_emails} emails ({total_zero_emails / total_emails * 100:.1f}%)")
+    click.echo()
+
+    for _, row in zero_engagement_senders.iterrows():
+        click.echo(f"{int(row['total_volume']):2d} emails | {row['from']}")
 
 
 if __name__ == "__main__":
