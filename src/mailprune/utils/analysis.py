@@ -6,6 +6,8 @@ Provides functions to analyze email audit data and generate insights.
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 from ..constants import DEFAULT_CSV_PATH, ENGAGEMENT_HIGH_THRESHOLD, ENGAGEMENT_LOW_THRESHOLD, ENGAGEMENT_MEDIUM_THRESHOLD
 
@@ -288,6 +290,37 @@ def filter_common_words(words: List[str]) -> List[str]:
         "within",
     }
     return [word.lower() for word in words if len(word) > 3 and word.lower() not in common_words]
+
+
+def cluster_senders_unsupervised(df: pd.DataFrame, n_clusters: int = 5) -> Dict[str, int]:
+    """
+    Perform unsupervised clustering on senders using K-Means.
+    Features: total_volume, unread_count, open_rate, ignorance_score.
+    Returns a dictionary mapping sender to cluster ID.
+    """
+    if df.empty or len(df) < n_clusters:
+        return {}
+
+    # Select features for clustering
+    features = df[["total_volume", "unread_count", "open_rate", "ignorance_score"]].copy()
+
+    # Handle any NaN values
+    features = features.fillna(0)
+
+    # Scale features
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(features)
+
+    # Perform K-Means clustering
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+    clusters = kmeans.fit_predict(scaled_features)
+
+    # Map senders to clusters
+    result = {}
+    for i, row in df.iterrows():
+        result[row["from"]] = int(clusters[i])
+
+    return result
 
 
 # Baseline metrics from the start of cleanup (for comparison)

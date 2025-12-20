@@ -18,6 +18,7 @@ from mailprune import (  # noqa: E402
     analyze_sender_email_patterns,
     analyze_sender_patterns,
     calculate_overall_metrics,
+    cluster_senders_unsupervised,
     compare_metrics,
     generate_cleanup_report,
     get_top_noise_makers,
@@ -135,3 +136,26 @@ class TestAnalysisFunctions:
 
         assert set(BASELINE_METRICS.keys()) == expected_keys
         assert all(isinstance(v, (int, float)) for v in BASELINE_METRICS.values())
+
+    def test_cluster_senders_unsupervised(self, sample_audit_data):
+        """Test unsupervised clustering of senders."""
+        clusters = cluster_senders_unsupervised(sample_audit_data, n_clusters=3)
+
+        assert isinstance(clusters, dict)
+        assert len(clusters) == len(sample_audit_data)
+        assert all(isinstance(cluster_id, int) for cluster_id in clusters.values())
+        assert all(cluster_id >= 0 and cluster_id < 3 for cluster_id in clusters.values())
+        # Check that all senders are assigned
+        assert set(clusters.keys()) == set(sample_audit_data["from"])
+
+    def test_cluster_senders_unsupervised_empty_df(self):
+        """Test clustering with empty dataframe."""
+        empty_df = pd.DataFrame()
+        clusters = cluster_senders_unsupervised(empty_df)
+        assert clusters == {}
+
+    def test_cluster_senders_unsupervised_few_senders(self, sample_audit_data):
+        """Test clustering with fewer senders than clusters."""
+        small_df = sample_audit_data.head(2)
+        clusters = cluster_senders_unsupervised(small_df, n_clusters=5)
+        assert clusters == {}

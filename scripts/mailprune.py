@@ -26,6 +26,7 @@ from mailprune import (  # noqa: E402
     load_audit_data,
 )
 from mailprune.commands import (  # noqa: E402
+    analyze_clusters,
     analyze_engagement,
     analyze_title_patterns,
     analyze_unread_by_category,
@@ -137,6 +138,14 @@ def engagement(csv_path: str, tier: str):
 def unread_by_category(csv_path: str):
     """Analyze unread emails grouped by Gmail categories."""
     analyze_unread_by_category(csv_path)
+
+
+@cli.command()
+@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
+@click.option("--n-clusters", default=5, type=int, help="Number of clusters to create (default: 5)")
+def cluster(csv_path: str, n_clusters: int):
+    """Analyze sender clusters for cleanup recommendations using unsupervised learning."""
+    analyze_clusters(csv_path, n_clusters)
 
 
 if __name__ == "__main__":
