@@ -14,7 +14,6 @@ import pandas as pd  # noqa: E402
 import pytest  # noqa: E402
 
 from mailprune import (  # noqa: E402
-    BASELINE_METRICS,
     analyze_sender_email_patterns,
     analyze_sender_patterns,
     calculate_overall_metrics,
@@ -116,26 +115,11 @@ class TestAnalysisFunctions:
         assert "TOP 10 NOISE MAKERS" in report
         assert "CLEANUP RECOMMENDATIONS" in report
 
-    def test_generate_cleanup_report_with_baseline(self, sample_audit_data):
-        """Test generating a cleanup report with baseline comparison."""
-        report = generate_cleanup_report(sample_audit_data, BASELINE_METRICS)
-
-        assert "IMPROVEMENT METRICS" in report
-        assert "Unread Rate Improvement" in report
-        assert "Top Score Reduction" in report
-
     def test_load_audit_data_file_not_found(self):
         """Test loading audit data when file doesn't exist."""
         df = load_audit_data("nonexistent_file.csv")
 
         assert df.empty
-
-    def test_baseline_metrics_structure(self):
-        """Test that baseline metrics has expected structure."""
-        expected_keys = {"total_emails", "unread_percentage", "average_open_rate", "senders_never_opened", "top_ignorance_score"}
-
-        assert set(BASELINE_METRICS.keys()) == expected_keys
-        assert all(isinstance(v, (int, float)) for v in BASELINE_METRICS.values())
 
     def test_cluster_senders_unsupervised(self, sample_audit_data):
         """Test unsupervised clustering of senders."""

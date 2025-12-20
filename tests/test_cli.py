@@ -66,7 +66,6 @@ class TestCLICommands:
         assert "COMPREHENSIVE EMAIL AUDIT REPORT" in result.output
         assert "5 unique senders" in result.output
         assert "63 total emails" in result.output
-        assert "IMPROVEMENT METRICS" in result.output
         assert "TOP 10 NOISE MAKERS" in result.output
         assert "CLEANUP RECOMMENDATIONS" in result.output
 

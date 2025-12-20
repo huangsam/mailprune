@@ -321,7 +321,3 @@ def cluster_senders_unsupervised(df: pd.DataFrame, n_clusters: int = 5) -> Dict[
         result[row["from"]] = int(clusters[i])
 
     return result
-
-
-# Baseline metrics from the start of cleanup (for comparison)
-BASELINE_METRICS = {"total_emails": 1974, "unread_percentage": 80.1, "average_open_rate": 12.0, "senders_never_opened": 313, "top_ignorance_score": 8300}

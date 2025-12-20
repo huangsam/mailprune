@@ -5,7 +5,6 @@ Report command implementation for MailPrune.
 import click
 
 from mailprune.utils import (
-    BASELINE_METRICS,
     calculate_overall_metrics,
     calculate_percentage,
     get_category_distribution,
@@ -38,19 +37,6 @@ def generate_report(csv_path: str) -> None:
     report.append(f"   • Senders Never Opened: {int(current_metrics['senders_never_opened'])}")
     report.append(f"   • Top Ignorance Score: {current_metrics['top_ignorance_score']:.0f}")
     report.append("")
-
-    # Progress Metrics
-    if BASELINE_METRICS:
-        unread_improvement = BASELINE_METRICS["unread_percentage"] - current_metrics["unread_percentage"]
-        top_score_reduction = BASELINE_METRICS["top_ignorance_score"] - current_metrics["top_ignorance_score"]
-        top_score_reduction_pct = top_score_reduction / BASELINE_METRICS["top_ignorance_score"] * 100
-        open_rate_improvement = current_metrics["average_open_rate"] - BASELINE_METRICS["average_open_rate"]
-
-        report.append("📈 IMPROVEMENT METRICS")
-        report.append(f"   • Unread Rate Improvement: {unread_improvement:.1f}%")
-        report.append(f"   • Top Score Reduction: {top_score_reduction:.0f} ({top_score_reduction_pct:.0f}%)")
-        report.append(f"   • Open Rate Improvement: {open_rate_improvement:.1f}%")
-        report.append("")
 
     # Distribution Summary
     top_10_volume = df.nlargest(10, "total_volume")["total_volume"].sum()

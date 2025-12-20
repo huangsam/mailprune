@@ -16,7 +16,6 @@ from .constants import (
     GmailLabels,
 )
 from .utils import (
-    BASELINE_METRICS,
     analyze_sender_email_patterns,
     analyze_sender_patterns,
     calculate_overall_metrics,
@@ -43,7 +42,6 @@ __all__ = [
     "GMAIL_API_VERSION",
     "GmailLabels",
     # Functions
-    "BASELINE_METRICS",
     "analyze_sender_email_patterns",
     "analyze_sender_patterns",
     "calculate_overall_metrics",
