@@ -42,9 +42,10 @@ def perform_audit(max_emails: int = 2000) -> Optional[pd.DataFrame]:
     1. Fetch the last N emails from Gmail API.
     2. Cache email metadata locally to avoid redundant API calls.
     3. Process emails to extract sender, date, labels.
-    4. Aggregate by sender to compute total volume, open rate, average recency.
-    5. Calculate an "ignorance score" to identify potential noise makers.
-    6. Save the audit report to data/noise_report.csv.
+    4. Prune cached emails that are no longer present (i.e., were deleted).
+    5. Aggregate by sender to compute total volume, open rate, average recency.
+    6. Calculate an "ignorance score" to identify potential noise makers.
+    7. Save the audit report to data/noise_report.csv.
     """
     start_time: float = time.time()
     service: Optional[Any] = get_gmail_service()
@@ -88,6 +89,9 @@ def perform_audit(max_emails: int = 2000) -> Optional[pd.DataFrame]:
 
     fetch_time: float = time.time()
     logger.info(f"Fetched {len(messages)} message IDs in {fetch_time - start_time:.2f}s")
+
+    # Collect current email IDs for pruning removed emails
+    current_email_ids = {m["id"] for m in messages}
 
     data: List[Dict[str, Any]] = []
     now: datetime = datetime.now(timezone.utc)
@@ -160,6 +164,15 @@ def perform_audit(max_emails: int = 2000) -> Optional[pd.DataFrame]:
 
     process_time: float = time.time()
     logger.info(f"Processed {len(data)} emails ({fetched_count} fetched from API, {len(data) - fetched_count} from cache) in {process_time - fetch_time:.2f}s")
+
+    # Prune emails that are no longer in the current fetch (i.e., were deleted)
+    pruned_count = 0
+    for msg_id in list(email_cache.keys()):
+        if msg_id not in current_email_ids:
+            del email_cache[msg_id]
+            pruned_count += 1
+    if pruned_count > 0:
+        logger.info(f"Pruned {pruned_count} removed emails from cache")
 
     # Save updated cache
     save_email_cache(email_cache)

@@ -8,6 +8,7 @@ Intelligent email management system that audits Gmail, identifies noise makers u
 - **Noise Detection**: Identifies high-volume, low-engagement senders that contribute to inbox clutter
 - **Cleanup Recommendations**: Provides actionable suggestions for unsubscribing and filtering
 - **Progress Tracking**: Monitors cleanup effectiveness with baseline comparisons
+- **Cache Pruning**: Automatically removes deleted emails from local cache between audit runs
 - **CLI Tools**: Command-line interface for easy analysis and reporting
 
 ## Installation
