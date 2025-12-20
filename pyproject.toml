@@ -27,11 +27,20 @@ ignore_missing_imports = true
 follow_imports = "silent"
 warn_unused_ignores = true
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+
 
 [dependency-groups]
 dev = [
     "isort>=7.0.0",
     "mypy>=1.19.1",
     "pandas-stubs>=2.3.3.251219",
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
     "ruff>=0.14.10",
 ]

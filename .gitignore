@@ -13,3 +13,4 @@ wheels/
 brainstorm/
 data/
 .DS_Store
+.coverage
