@@ -16,7 +16,7 @@ line-length = 160
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "C", "Q"]
-extend-ignore = ["E203"]
+extend-ignore = ["E203", "C901"]
 
 [tool.isort]
 profile = "black"

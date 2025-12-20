@@ -56,6 +56,9 @@ uv run python scripts/mailprune.py title-patterns --top-n 3
 
 # Analyze title patterns for top problematic senders (by ignorance score)
 uv run python scripts/mailprune.py problematic-titles --top-n 5
+
+# Analyze unread emails by Gmail categories
+uv run python scripts/mailprune.py unread-by-category
 ```
 
 ## For AI Agents and Automated Tools
