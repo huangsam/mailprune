@@ -35,8 +35,6 @@ mailprune/
 │   ├── google-details.txt # Gmail API configuration
 │   ├── noise_report.csv  # Generated audit results
 │   └── token.json        # Gmail API authentication token
-├── brainstorm/            # Development planning and notes
-│   └── initial-plan.md   # Initial project planning document
 ├── pyproject.toml         # Project configuration and dependencies
 ├── uv.lock               # Dependency lock file
 └── AGENTS.md             # This documentation
