@@ -33,11 +33,11 @@ def get_gmail_service() -> Optional[Any]:
     return build("gmail", "v1", credentials=creds)
 
 
-def perform_audit(max_emails: int = 2000) -> None:
+def perform_audit(max_emails: int = 2000) -> Optional[pd.DataFrame]:
     start_time: float = time.time()
     service: Optional[Any] = get_gmail_service()
     if not service:
-        return
+        return None
 
     # Load existing cache
     email_cache = load_email_cache()
@@ -164,5 +164,5 @@ def perform_audit(max_emails: int = 2000) -> None:
     audit_summary.to_csv(output_path, index=False)
     save_time: float = time.time()
     logger.info(f"Audit complete! Report saved to {output_path} in total {save_time - start_time:.2f}s")
-    logger.info("Top 10 Noise Makers by Ignorance Score:")
-    logger.info("\n" + str(audit_summary.head(10)[["from", "total_volume", "open_rate", "avg_recency_days", "ignorance_score"]]))
+
+    return audit_summary
