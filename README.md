@@ -67,57 +67,6 @@ uv run python scripts/mailprune.py engagement
 uv run python scripts/mailprune.py top-volume --top-n 10
 ```
 
-## Testing
+## For AI Agents and Automated Tools
 
-Run the test suite:
-
-```bash
-# Run all tests
-uv run python -m pytest
-
-# Run with coverage
-uv run python -m pytest --cov=src/mailprune
-
-# Run specific test file
-uv run python -m pytest tests/test_analysis.py
-```
-
-## Development
-
-### Code Quality
-
-```bash
-# Format code
-uv run ruff format
-
-# Lint code
-uv run ruff check --fix
-
-# Type checking
-uv run mypy src/
-```
-
-### Adding Tests
-
-Tests are located in the `tests/` directory. Use pytest fixtures for test data and Click's test runner for CLI testing.
-
-## Project Structure
-
-```
-mailprune/
-├── src/mailprune/          # Core package
-│   ├── __init__.py        # Package exports
-│   ├── analysis.py        # Analysis functions
-│   ├── audit.py          # Gmail API integration
-│   ├── utils.py          # Utility functions
-│   └── constants.py      # Constants and configuration
-├── scripts/               # Executable scripts
-│   ├── mailprune.py      # Unified audit and analysis CLI
-│   ├── run_audit.py      # Legacy audit runner (deprecated)
-│   ├── analyze_emails.py # Legacy analysis CLI (deprecated)
-│   └── run_tests.py      # Test runner
-├── tests/                 # Test suite
-│   ├── test_analysis.py  # Analysis function tests
-│   └── test_cli.py       # CLI command tests
-└── data/                  # Data files and cache
-```
+See [AGENTS.md](AGENTS.md) for detailed information about project structure, development workflows, testing, and guidelines for automated tools working with this codebase.
