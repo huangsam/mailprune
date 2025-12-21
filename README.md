@@ -4,11 +4,11 @@ Intelligent email management system that audits Gmail, identifies noise makers u
 
 ## Features
 
-- **Smart Email Auditing**: Analyzes Gmail inbox volume, open rates, and noise patterns to identify problematic senders
-- **Targeted Cleanup**: Provides actionable recommendations for unsubscribing and filtering high-impact senders
-- **Advanced Analysis**: Multiple analysis modes including engagement tiers, sender clustering and more
-- **Performance Optimized**: Parallel processing and intelligent caching for fast, efficient audits
-- **CLI Tools**: Command-line interface for comprehensive email management and reporting
+- **Smart Email Auditing**: Analyzes inbox volume, open rates, and noise patterns
+- **Targeted Cleanup**: Actionable recommendations for unsubscribing and filtering
+- **Advanced Analysis**: Multiple modes including engagement tiers and clustering
+- **Performance Optimized**: Parallel processing and intelligent caching
+- **CLI Tools**: Command-line interface for email management and reporting
 
 ## Installation
 
