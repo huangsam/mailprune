@@ -19,9 +19,6 @@ cd mailprune
 
 # Install dependencies
 uv sync
-
-# Set up Gmail API credentials
-# Follow instructions at https://developers.google.com/gmail/api/quickstart/python
 ```
 
 ## Usage
@@ -30,6 +27,8 @@ uv sync
 
 ```bash
 # Run a full email audit (requires Gmail API setup)
+# Follow instructions at https://developers.google.com/gmail/api/quickstart/python
+# Then place your credentials.json in the $REPO_ROOT/data directory
 uv run python scripts/mailprune.py audit --max-emails 2000
 ```
 
@@ -45,24 +44,14 @@ uv run python scripts/mailprune.py summary
 # Analyze sender engagement patterns and tiers
 uv run python scripts/mailprune.py engagement
 
-# Show detailed listing of zero engagement senders
-uv run python scripts/mailprune.py engagement --tier zero
-
 # Perform unsupervised clustering analysis on senders
 uv run python scripts/mailprune.py cluster
 
-# Analyze specific sender
+# Analyze specific sender patterns
 uv run python scripts/mailprune.py sender "newsletter@company.com"
-
-# Analyze title patterns for top senders (by volume)
-uv run python scripts/mailprune.py title-patterns --top-n 3
-
-# Analyze title patterns for top problematic senders (by ignorance score)
-uv run python scripts/mailprune.py title-patterns --by ignorance --top-n 5
-
-# Analyze unread emails by Gmail categories
-uv run python scripts/mailprune.py unread-by-category
 ```
+
+Run `uv run python scripts/mailprune.py --help` for more commands and options.
 
 ## For AI Agents and Automated Tools
 
