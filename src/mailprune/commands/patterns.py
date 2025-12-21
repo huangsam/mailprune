@@ -11,7 +11,22 @@ from mailprune.utils.analysis import analyze_title_patterns_core
 
 
 def analyze_patterns(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict:
-    """Analyze content patterns for top senders using email snippets."""
+    """Analyze content patterns for top senders using email snippets.
+
+    This function performs comprehensive content analysis on email data to identify
+    patterns and characteristics of top senders. It leverages NLP processing to extract
+    meaningful keywords and named entities from email content snippets.
+
+    The analysis process includes:
+
+    1. Load cached email data from the specified cache path.
+    2. Group emails by sender and sort by the specified metric (volume or ignorance score).
+    3. For each top sender, analyze combined email snippets for keywords and entities.
+    4. Display formatted results showing sender details, content patterns, and insights.
+
+    Note: Requires existing email cache and audit data. NLP processing provides richer
+    insights but requires spaCy model to be available.
+    """
     results = analyze_title_patterns_core(cache_path, audit_data, top_n, by, use_nlp)
 
     # Display results
