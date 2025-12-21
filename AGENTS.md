@@ -1,4 +1,4 @@
-# MailPrune - Agent Documentation
+# Mailprune - Agent Documentation
 
 This document provides information specifically for AI agents and automated tools working with the MailPrune codebase.
 
