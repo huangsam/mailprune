@@ -67,7 +67,7 @@ def setup_audit() -> Tuple[GmailServicePool, Dict[str, Any]]:
     return service_pool, email_cache
 
 
-def fetch_message_ids(service_pool: GmailServicePool, max_emails: int) -> List[Dict[str, str]]:
+def fetch_message_ids(service_pool: GmailServicePool, max_emails: int, query: str = "") -> List[Dict[str, str]]:
     """Fetch message IDs from Gmail API with pagination."""
     messages: List[Dict[str, str]] = []
     page_token: Optional[str] = None
@@ -76,6 +76,8 @@ def fetch_message_ids(service_pool: GmailServicePool, max_emails: int) -> List[D
     while len(messages) < max_emails:
         batch_size = min(remaining_emails, 500)
         request_params = {"userId": "me", "maxResults": batch_size}
+        if query:
+            request_params["q"] = query
         if page_token:
             request_params["pageToken"] = page_token
 

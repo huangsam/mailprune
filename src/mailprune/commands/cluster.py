@@ -43,21 +43,37 @@ def analyze_clusters(csv_path: str, n_clusters: int = 5) -> None:
     click.echo(f"Clustered {len(df)} senders into {n_clusters} groups based on volume, engagement, and noise patterns.")
     click.echo("")
 
+    # Calculate statistics for all clusters first
+    cluster_stats = {}
     for cluster_id in sorted(cluster_groups.keys()):
         senders = cluster_groups[cluster_id]
-        click.echo(f"🎯 CLUSTER {cluster_id} ({len(senders)} senders)")
-
-        # Calculate cluster statistics
         total_emails = sum(sender_data[s]["total_volume"] for s in senders)
         avg_open_rate = sum(sender_data[s]["open_rate"] for s in senders) / len(senders)
         avg_ignorance = sum(sender_data[s]["ignorance_score"] for s in senders) / len(senders)
         total_unread = sum(sender_data[s]["unread_count"] for s in senders)
 
-        click.echo(f"   📈 Stats: {total_emails} emails, {total_unread} unread, {avg_open_rate:.1f}% avg open rate, {avg_ignorance:.0f} avg ignorance")
+        cluster_stats[cluster_id] = {
+            "senders": senders,
+            "total_emails": total_emails,
+            "avg_open_rate": avg_open_rate,
+            "avg_ignorance": avg_ignorance,
+            "total_unread": total_unread,
+        }
+
+    # Sort clusters by average open rate ascending (worst offenders first)
+    sorted_clusters = sorted(cluster_stats.items(), key=lambda x: x[1]["avg_open_rate"])
+
+    for cluster_id, stats in sorted_clusters:
+        click.echo(f"🎯 CLUSTER {cluster_id} ({len(stats['senders'])} senders)")
+
+        click.echo(
+            f"   📈 Stats: {stats['total_emails']} emails, {stats['total_unread']} unread, "
+            f"{stats['avg_open_rate']:.1f}% avg open rate, {stats['avg_ignorance']:.0f} avg ignorance"
+        )
         click.echo("   🗑️  Potential cleanup targets:")
 
         # Sort senders in cluster by ignorance score for cleanup suggestions
-        sorted_senders = sorted(senders, key=lambda s: sender_data[s]["ignorance_score"], reverse=True)
+        sorted_senders = sorted(stats["senders"], key=lambda s: sender_data[s]["ignorance_score"], reverse=True)
 
         for sender in sorted_senders[:5]:  # Show top 5 per cluster
             data = sender_data[sender]

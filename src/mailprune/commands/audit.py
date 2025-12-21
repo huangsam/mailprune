@@ -23,7 +23,7 @@ from mailprune.utils.helpers import save_email_cache
 logger = logging.getLogger(__name__)
 
 
-def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS) -> Optional[pd.DataFrame]:
+def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:trash") -> Optional[pd.DataFrame]:
     """Perform Phase 1 Email Audit.
 
     The steps are as follows:
@@ -45,7 +45,7 @@ def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS) -> Optional[pd.DataFrame
         logger.info(f"Starting audit of the last {max_emails} emails...")
 
         # Fetch message IDs
-        messages = fetch_message_ids(service_pool, max_emails)
+        messages = fetch_message_ids(service_pool, max_emails, query=query)
         fetch_time: float = time.time()
         logger.info(f"Fetched {len(messages)} message IDs in {fetch_time - start_time:.2f}s")
 

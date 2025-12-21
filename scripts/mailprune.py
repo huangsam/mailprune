@@ -63,7 +63,12 @@ def cli(verbose: bool):
     type=int,
     help="Maximum number of emails to audit (default: 2000)",
 )
-def audit(max_emails: int) -> None:
+@click.option(
+    "--query",
+    default="-label:trash",
+    help="Gmail search query to filter emails (default: -label:trash)",
+)
+def audit(max_emails: int, query: str) -> None:
     """
     Run email audit.
 
@@ -74,7 +79,7 @@ def audit(max_emails: int) -> None:
         raise click.BadParameter("max-emails must be a positive integer")
 
     logger.info(f"Running Phase 1 Audit with {max_emails} emails...")
-    audit_summary = perform_audit(max_emails)
+    audit_summary = perform_audit(max_emails, query)
 
     if audit_summary is not None:
         click.echo("Top 10 Noise Makers by Ignorance Score:")
