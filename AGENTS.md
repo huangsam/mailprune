@@ -7,35 +7,11 @@ This document provides information specifically for AI agents and automated tool
 ```
 mailprune/
 ├── src/mailprune/          # Core package
-│   ├── __init__.py        # Package exports
-│   ├── constants.py       # Configuration constants and Gmail labels
 │   ├── commands/          # CLI command implementations
-│   │   ├── __init__.py   # Command package exports
-│   │   ├── audit.py      # Audit execution command
-│   │   ├── cluster.py    # Sender clustering analysis command
-│   │   ├── engagement.py # Engagement analysis command
-│   │   ├── report.py     # Comprehensive report command
-│   │   ├── summary.py    # Summary statistics command
-│   │   ├── title_patterns.py # Title pattern analysis command
-│   │   └── unread_by_category.py # Unread by category command
 │   └── utils/             # Utility modules
-│       ├── __init__.py   # Utils package exports
-│       ├── analysis.py   # Email analysis functions
-│       ├── audit.py      # Gmail API integration
-│       └── helpers.py    # General utility functions
 ├── scripts/               # Executable scripts
-│   ├── __init__.py       # Package marker
-│   └── mailprune.py      # Unified audit and analysis CLI
 ├── tests/                 # Test suite
-│   ├── __init__.py       # Package marker
-│   ├── test_analysis.py  # Analysis function tests
-│   └── test_cli.py       # CLI command tests
 ├── data/                  # Data files and cache
-│   ├── credentials.json  # Gmail API credentials
-│   ├── email_cache.json  # Cached email metadata
-│   ├── google-details.txt # Gmail API configuration
-│   ├── noise_report.csv  # Generated audit results
-│   └── token.json        # Gmail API authentication token
 ├── pyproject.toml         # Project configuration and dependencies
 ├── uv.lock               # Dependency lock file
 └── AGENTS.md             # This documentation
