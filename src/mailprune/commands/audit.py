@@ -1,5 +1,5 @@
 """
-Audit command implementation for MailPrune.
+Audit command implementation for Mailprune.
 """
 
 import logging

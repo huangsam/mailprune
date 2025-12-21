@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This comprehensive guide walks you through assessing and optimizing your Gmail inbox using MailPrune. Whether you're dealing with email overload, want to improve productivity, or simply want to maintain a clean inbox, this framework provides data-driven insights and actionable recommendations.
+This comprehensive guide walks you through assessing and optimizing your Gmail inbox using Mailprune. Whether you're dealing with email overload, want to improve productivity, or simply want to maintain a clean inbox, this framework provides data-driven insights and actionable recommendations.
 
 **What you'll accomplish:**
 - Analyze your email patterns and engagement habits
@@ -16,7 +16,7 @@ This comprehensive guide walks you through assessing and optimizing your Gmail i
 Before starting, ensure you have:
 
 ### 1. Technical Requirements
-- **Python 3.12+**: Required for running MailPrune
+- **Python 3.12+**: Required for running Mailprune
 - **Git**: For cloning the repository
 - **uv package manager**: For dependency management (install via `pip install uv`)
 - **Terminal/Command Line**: Basic familiarity with command-line tools
@@ -33,7 +33,7 @@ Before starting, ensure you have:
 
 ## Setup
 
-### Step 1: Install MailPrune
+### Step 1: Install Mailprune
 ```bash
 # Clone the repository
 gh repo clone huangsam/mailprune
@@ -45,7 +45,7 @@ uv sync --editable
 
 ### Step 2: Set Up Gmail API Access
 
-MailPrune uses Google's Gmail API to analyze your emails securely. This requires a one-time setup:
+Mailprune uses Google's Gmail API to analyze your emails securely. This requires a one-time setup:
 
 1. **Enable Gmail API**:
    - Go to [Google Cloud Console](https://console.cloud.google.com/)

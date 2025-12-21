@@ -1,5 +1,5 @@
 """
-Report command implementation for MailPrune.
+Report command implementation for Mailprune.
 """
 
 import click

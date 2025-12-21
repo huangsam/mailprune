@@ -1,7 +1,7 @@
 """
-MailPrune CLI Entry Point
+Mailprune CLI Entry Point
 
-This module provides the main CLI entry point for the MailPrune application.
+This module provides the main CLI entry point for the Mailprune application.
 """
 
 import logging
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 )
 def cli(verbose: bool):
     """
-    MailPrune - Email Audit and Analysis Tool
+    Mailprune - Email Audit and Analysis Tool
 
     Audit your Gmail inbox and identify noise patterns to improve email management.
     """

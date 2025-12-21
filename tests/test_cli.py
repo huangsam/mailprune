@@ -87,7 +87,7 @@ class TestCLICommands:
         result = runner.invoke(cli, ["--help"])
 
         assert result.exit_code == 0
-        assert "MailPrune - Email Audit and Analysis Tool" in result.output
+        assert "Mailprune - Email Audit and Analysis Tool" in result.output
         assert "audit" in result.output
         assert "report" in result.output
         assert "sender" in result.output

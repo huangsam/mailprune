@@ -1,10 +1,10 @@
 # Mailprune - Agent Documentation
 
-This document provides information specifically for AI agents and automated tools working with the MailPrune codebase.
+This document provides information specifically for AI agents and automated tools working with the Mailprune codebase.
 
 ## Quick Start for Agents
 
-For a comprehensive guide on running MailPrune commands and interpreting results, see [USERGUIDE.md](USERGUIDE.md).
+For a comprehensive guide on running Mailprune commands and interpreting results, see [USERGUIDE.md](USERGUIDE.md).
 
 ## Project Structure
 

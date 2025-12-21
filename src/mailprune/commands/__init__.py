@@ -1,5 +1,5 @@
 """
-MailPrune CLI Commands
+Mailprune CLI Commands
 
 This package contains the implementation logic for CLI commands.
 Each command is in its own module for better organization and maintainability.

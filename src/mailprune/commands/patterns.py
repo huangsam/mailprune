@@ -1,5 +1,5 @@
 """
-Content patterns command with NLP processing for MailPrune.
+Content patterns command with NLP processing for Mailprune.
 Analyzes email content snippets for comprehensive pattern recognition.
 """
 

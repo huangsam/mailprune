@@ -1,5 +1,5 @@
 """
-MailPrune utility modules.
+Mailprune utility modules.
 
 This package contains utility functions organized by domain:
 - analysis.py: Email analysis and metrics functions

@@ -1,4 +1,4 @@
-# MailPrune
+# Mailprune
 
 Smart email cleanup tool that audits your Gmail, spots noise makers, and suggests targeted fixes.
 

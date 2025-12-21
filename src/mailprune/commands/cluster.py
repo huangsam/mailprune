@@ -1,5 +1,5 @@
 """
-Cluster command implementation for MailPrune.
+Cluster command implementation for Mailprune.
 """
 
 import click

@@ -1,5 +1,5 @@
 """
-Engagement command implementation for MailPrune.
+Engagement command implementation for Mailprune.
 """
 
 import click
