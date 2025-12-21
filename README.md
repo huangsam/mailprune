@@ -8,7 +8,6 @@ Smart email cleanup tool that audits your Gmail, spots noise makers, and suggest
 - **Targeted Cleanup**: Recommends unsubscribes and filters
 - **Advanced Analysis**: Engagement tiers, clustering, and content patterns
 - **Fast & Efficient**: Parallel processing with intelligent caching
-- **CLI Tools**: Easy command-line interface
 
 ## 🚀 Quick Start
 
