@@ -2,6 +2,10 @@
 
 This document provides information specifically for AI agents and automated tools working with the MailPrune codebase.
 
+## Quick Start for Agents
+
+For a comprehensive guide on running MailPrune commands and interpreting results, see [USERGUIDE.md](USERGUIDE.md).
+
 ## Project Structure
 
 ```

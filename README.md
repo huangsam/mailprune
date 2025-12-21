@@ -23,7 +23,15 @@ uv sync --editable
 
 ## Usage
 
-### Running an Email Audit
+### Streamlined Assessment
+
+For a comprehensive email assessment with AI, ask Cursor/Copilot to use [USERGUIDE.md](USERGUIDE.md).
+
+### Manual Asssessment
+
+For a more hands-on approach, you can run individual commands as follows:
+
+#### Running an Email Audit
 
 ```bash
 # Run a full email audit (requires Gmail API setup)
@@ -32,7 +40,7 @@ uv sync --editable
 uv run mailprune audit --max-emails 2000
 ```
 
-### Analyzing Audit Results
+#### Analyzing Audit Results
 
 ```bash
 # Generate comprehensive email audit and cleanup report
