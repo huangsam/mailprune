@@ -1,7 +1,6 @@
 import logging
 import os
 import queue
-import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -14,6 +13,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from ..constants import (
+    DEFAULT_BATCH_SIZE,
     DEFAULT_CREDENTIALS_PATH,
     DEFAULT_POOL_SIZE,
     DEFAULT_TOKEN_PATH,
@@ -112,51 +112,59 @@ def fetch_message_ids(service_pool: GmailServicePool, max_emails: int, query: st
 
 
 def fetch_uncached_messages(service_pool: GmailServicePool, email_cache: Dict[str, Any], messages_to_fetch: List[Dict[str, str]]) -> int:
-    """Fetch uncached messages in parallel and update cache."""
+    """Fetch uncached messages in batches and update cache."""
     if not messages_to_fetch:
         return 0
 
-    logger.info(f"Fetching {len(messages_to_fetch)} uncached emails in parallel...")
+    logger.info(f"Fetching {len(messages_to_fetch)} uncached emails in batches of {DEFAULT_BATCH_SIZE}...")
     fetched_count = 0
+    batch_size = DEFAULT_BATCH_SIZE
 
-    def fetch_message(msg):
-        msg_id = msg["id"]
+    # Split into batches
+    batches = [messages_to_fetch[i : i + batch_size] for i in range(0, len(messages_to_fetch), batch_size)]
+
+    def fetch_batch(batch_messages):
         service = service_pool.get_service()
         try:
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    fetched_msg = (
-                        service.users()
-                        .messages()
-                        .get(
-                            userId="me",
-                            id=msg_id,
-                            format="metadata",
-                            metadataHeaders=["From", "Subject", "Date"],
-                        )
-                        .execute()
+            batch = service.new_batch_http_request()
+            results = {}
+
+            def callback(request_id, response, exception):
+                results[request_id] = (response, exception)
+
+            for msg in batch_messages:
+                msg_id = msg["id"]
+                request = (
+                    service.users()
+                    .messages()
+                    .get(
+                        userId="me",
+                        id=msg_id,
+                        format="metadata",
+                        metadataHeaders=["From", "Subject", "Date"],
                     )
-                    return msg_id, fetched_msg
-                except Exception as e:
-                    if attempt == max_retries - 1:
-                        logger.warning(f"Failed to fetch message {msg_id} after {max_retries} attempts: {e}")
-                        return msg_id, None
-                    logger.debug(f"Retry {attempt + 1} for message {msg_id}: {e}")
-                    time.sleep(0.1 * (2**attempt))  # Exponential backoff
+                )
+                batch.add(request, callback=callback, request_id=msg_id)
+
+            batch.execute()
+            batch_fetched = 0
+            for msg_id, (resp, exc) in results.items():
+                if exc:
+                    logger.warning(f"Failed to fetch message {msg_id}: {exc}")
+                else:
+                    email_cache[msg_id] = resp
+                    batch_fetched += 1
+                    logger.debug(f"Fetched and cached message {msg_id}")
+            return batch_fetched
         finally:
             service_pool.return_service(service)
 
     with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_msg = {executor.submit(fetch_message, msg): msg for msg in messages_to_fetch}
+        future_to_batch = {executor.submit(fetch_batch, batch): batch for batch in batches}
+        for future in as_completed(future_to_batch):
+            fetched_count += future.result()
 
-        for future in as_completed(future_to_msg):
-            msg_id, fetched_msg = future.result()
-            if fetched_msg:
-                email_cache[msg_id] = fetched_msg
-                fetched_count += 1
-                logger.debug(f"Fetched and cached message {msg_id}")
-
+    logger.info(f"Fetched {fetched_count} messages in {len(batches)} batches")
     return fetched_count
 
 
