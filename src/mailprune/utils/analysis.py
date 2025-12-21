@@ -4,7 +4,7 @@ Provides functions to analyze email audit data and generate insights.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 _SPACY_MODEL = None
 
 
-def get_spacy_model():
+def get_spacy_model() -> Optional[Any]:
     """Load and cache the spaCy model."""
     global _SPACY_MODEL
     if _SPACY_MODEL is not None:
@@ -32,7 +32,7 @@ def get_spacy_model():
     except OSError:
         logger.info("spaCy model 'en_core_web_sm' not found. Attempting to download...")
         try:
-            spacy.cli.download("en_core_web_sm")
+            spacy.cli.download("en_core_web_sm")  # type: ignore
             _SPACY_MODEL = spacy.load("en_core_web_sm")
             logger.info("Successfully downloaded and loaded spaCy model.")
         except Exception as e:
@@ -521,7 +521,7 @@ def analyze_title_patterns_core(
     top_n: int = 5,
     by: str = "volume",
     use_nlp: bool = True,
-) -> Dict:
+) -> Dict[str, Dict[str, Any]]:
     """Core content pattern analysis using email snippets for richer NLP analysis."""
     from collections import Counter
 

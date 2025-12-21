@@ -28,7 +28,7 @@ from .helpers import load_email_cache
 logger = logging.getLogger(__name__)
 
 
-def execute_batch_with_retry(batch, max_retries=5):
+def execute_batch_with_retry(batch, max_retries=5) -> None:
     """Execute a Gmail API batch request with exponential backoff retry on rate limits."""
     for attempt in range(max_retries):
         try:
