@@ -15,6 +15,7 @@ from googleapiclient.errors import HttpError
 
 from ..constants import (
     DEFAULT_BATCH_SIZE,
+    DEFAULT_CACHE_PATH,
     DEFAULT_CREDENTIALS_PATH,
     DEFAULT_TOKEN_PATH,
     GMAIL_API_SCOPES,
@@ -58,14 +59,14 @@ def get_gmail_service() -> Optional[Any]:
     return build(GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, credentials=creds)
 
 
-def setup_audit() -> Tuple[Any, Dict[str, Any]]:
+def setup_audit(cache_path: str = DEFAULT_CACHE_PATH) -> Tuple[Any, Dict[str, Any]]:
     """Set up service and load email cache for audit."""
     if not os.path.exists(DEFAULT_TOKEN_PATH):
         logger.error("Valid token.json not found in data/. Run main.py to authenticate.")
         raise FileNotFoundError("token.json not found")
 
     service = get_gmail_service()
-    email_cache = load_email_cache()
+    email_cache = load_email_cache(cache_path)
     logger.info(f"Loaded {len(email_cache)} emails from cache")
     return service, email_cache
 

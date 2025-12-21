@@ -401,7 +401,7 @@ def analyze_title_patterns_core(cache_path: str, audit_data: List[Dict], top_n: 
 
     # Load email cache and get sender subjects
     try:
-        cache = load_email_cache()
+        cache = load_email_cache(cache_path)
         sender_subjects = get_sender_subjects_from_cache(cache)
     except Exception:
         sender_subjects = {}

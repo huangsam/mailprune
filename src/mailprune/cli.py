@@ -17,6 +17,7 @@ from mailprune.commands import (
     perform_audit,
     show_summary,
 )
+from mailprune.constants import DEFAULT_CACHE_PATH, DEFAULT_MAX_EMAILS
 from mailprune.utils import (
     analyze_sender_patterns,
     load_audit_data,
@@ -50,16 +51,21 @@ def cli(verbose: bool):
 @click.option(
     "--max-emails",
     "-n",
-    default=2000,
+    default=DEFAULT_MAX_EMAILS,
     type=int,
-    help="Maximum number of emails to audit (default: 2000)",
+    help=f"Maximum number of emails to audit (default: {DEFAULT_MAX_EMAILS})",
 )
 @click.option(
     "--query",
     default="-label:trash",
     help="Gmail search query to filter emails (default: -label:trash)",
 )
-def audit(max_emails: int, query: str) -> None:
+@click.option(
+    "--cache-path",
+    default=str(DEFAULT_CACHE_PATH),
+    help=f"Path to email cache file (default: {DEFAULT_CACHE_PATH})",
+)
+def audit(max_emails: int, query: str, cache_path: str) -> None:
     """
     Run email audit.
 
@@ -70,7 +76,7 @@ def audit(max_emails: int, query: str) -> None:
         raise click.BadParameter("max-emails must be a positive integer")
 
     logger.info(f"Running Phase 1 Audit with {max_emails} emails...")
-    audit_summary = perform_audit(max_emails, query)
+    audit_summary = perform_audit(max_emails, query, cache_path)
 
     if audit_summary is not None:
         click.echo("Top 10 Noise Makers by Ignorance Score:")

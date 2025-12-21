@@ -8,7 +8,6 @@ from typing import Optional
 
 import pandas as pd
 
-from mailprune.constants import DEFAULT_MAX_EMAILS
 from mailprune.utils.audit import (
     aggregate_and_score,
     fetch_message_ids,
@@ -23,7 +22,7 @@ from mailprune.utils.helpers import save_email_cache
 logger = logging.getLogger(__name__)
 
 
-def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:trash") -> Optional[pd.DataFrame]:
+def perform_audit(max_emails: int, query: str, cache_path: str) -> Optional[pd.DataFrame]:
     """Perform Phase 1 Email Audit.
 
     The steps are as follows:
@@ -40,7 +39,7 @@ def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:tra
 
     try:
         # Setup
-        service, email_cache = setup_audit()
+        service, email_cache = setup_audit(cache_path)
 
         logger.info(f"Starting audit of the last {max_emails} emails...")
 
@@ -69,7 +68,7 @@ def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:tra
         prune_cache(email_cache, current_email_ids)
 
         # Save updated cache
-        save_email_cache(email_cache)
+        save_email_cache(email_cache, cache_path)
 
         # Process with Pandas
         df: pd.DataFrame = pd.DataFrame(data)

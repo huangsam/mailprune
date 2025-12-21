@@ -61,21 +61,21 @@ class ChainableFallback(Generic[T]):
         return self.default_fallback()
 
 
-def load_email_cache() -> Dict[str, Dict[str, Any]]:
+def load_email_cache(cache_path: str = DEFAULT_CACHE_PATH) -> Dict[str, Dict[str, Any]]:
     """Load cached email data from file."""
-    if os.path.exists(DEFAULT_CACHE_PATH):
+    if os.path.exists(cache_path):
         try:
-            with open(DEFAULT_CACHE_PATH, "r") as f:
+            with open(cache_path, "r") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError) as e:
             logger.warning(f"Failed to load cache: {e}. Starting fresh.")
     return {}
 
 
-def save_email_cache(cache: Dict[str, Dict[str, Any]]) -> None:
+def save_email_cache(cache: Dict[str, Dict[str, Any]], cache_path: str = DEFAULT_CACHE_PATH) -> None:
     """Save email data to cache file."""
     try:
-        with open(DEFAULT_CACHE_PATH, "w") as f:
+        with open(cache_path, "w") as f:
             json.dump(cache, f, indent=2)
         logger.info(f"Saved {len(cache)} emails to cache")
     except IOError as e:
