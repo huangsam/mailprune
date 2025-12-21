@@ -1,66 +1,48 @@
-# Mailprune
+# MailPrune
 
-Intelligent email management system that audits Gmail, identifies noise makers using data-driven analysis, and provides targeted cleanup strategies.
+Smart email cleanup tool that audits your Gmail, spots noise makers, and suggests targeted fixes.
 
-## Features
+## ✨ Features
 
-- **Smart Email Auditing**: Analyzes inbox volume, open rates, and noise patterns
-- **Targeted Cleanup**: Actionable recommendations for unsubscribing and filtering
-- **Advanced Analysis**: Multiple modes including engagement tiers and clustering
-- **Performance Optimized**: Parallel processing and intelligent caching
-- **CLI Tools**: Command-line interface for email management and reporting
+- **Smart Auditing**: Analyzes inbox volume, open rates, and patterns
+- **Targeted Cleanup**: Recommends unsubscribes and filters
+- **Advanced Analysis**: Engagement tiers, clustering, and content patterns
+- **Fast & Efficient**: Parallel processing with intelligent caching
+- **CLI Tools**: Easy command-line interface
 
-## Installation
+## 🚀 Quick Start
 
-```bash
-# Clone the repository
-gh repo clone huangsam/mailprune
-cd mailprune
+1. **Install**: `gh repo clone huangsam/mailprune; cd mailprune; uv sync --editable`
+2. **Set up Gmail API**: Follow [Google's guide], place `credentials.json` in `data/`
+3. **Run Assessment**: `uv run mailprune audit --max-emails 2000`
+4. **Get Recommendations**: Follow [USERGUIDE.md](USERGUIDE.md) for full workflow
 
-# Install dependencies along with mailprune in editable mode
-uv sync --editable
-```
+[Google's guide]: https://developers.google.com/gmail/api/quickstart/python
 
-## Usage
+## 📖 Usage
 
 ### Streamlined Assessment
+For guided cleanup with AI assistance, see [USERGUIDE.md](USERGUIDE.md).
 
-For a comprehensive email assessment with AI, ask Cursor/Copilot to use [USERGUIDE.md](USERGUIDE.md).
-
-### Manual Asssessment
-
-For a more hands-on approach, you can run individual commands as follows:
-
-#### Running an Email Audit
-
+### Manual Commands
 ```bash
-# Run a full email audit (requires Gmail API setup)
-# Follow instructions at https://developers.google.com/gmail/api/quickstart/python
-# Then place your credentials.json in the $REPO_ROOT/data directory
+# Audit inbox
 uv run mailprune audit --max-emails 2000
-```
 
-#### Analyzing Audit Results
-
-```bash
-# Generate comprehensive email audit and cleanup report
+# Generate report
 uv run mailprune report
 
-# Analyze sender engagement patterns and tiers
+# Analyze engagement
 uv run mailprune engagement
 
-# Perform unsupervised clustering analysis on senders
-uv run mailprune cluster
-
-# Analyze content patterns for top senders (with optional NLP)
+# Find patterns
 uv run mailprune patterns --top-n 5 --by volume
 
-# Analyze specific sender patterns
-uv run mailprune sender "newsletter@company.com"
+# Cluster senders
+uv run mailprune cluster
 ```
 
-Run `uv run mailprune --help` for more commands and options.
+Run `uv run mailprune --help` for all options.
 
-## For AI Agents and Automated Tools
-
-See [AGENTS.md](AGENTS.md) for detailed information about project structure, development workflows, testing, and guidelines for automated tools working with this codebase.
+## 🤖 For AI Agents
+See [AGENTS.md](AGENTS.md) for development details, testing, and automation guidelines.
