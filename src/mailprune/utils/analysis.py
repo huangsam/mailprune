@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 from ..constants import DEFAULT_CSV_PATH, ENGAGEMENT_HIGH_THRESHOLD, ENGAGEMENT_LOW_THRESHOLD, ENGAGEMENT_MEDIUM_THRESHOLD
+from ..utils.helpers import ChainableFallback
 
 
 def load_audit_data(csv_path: str = DEFAULT_CSV_PATH) -> pd.DataFrame:
@@ -321,3 +322,116 @@ def cluster_senders_unsupervised(df: pd.DataFrame, n_clusters: int = 5) -> Dict[
         result[row["from"]] = int(clusters[i])
 
     return result
+
+
+def preprocess_text(text: str) -> str:
+    """Clean and normalize text for analysis."""
+    import re
+
+    # Convert to lowercase
+    text = text.lower()
+    # Remove special characters and extra whitespace
+    text = re.sub(r"[^\w\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def extract_keywords_nlp(text: str, use_nlp: bool = True) -> List[str]:
+    """Extract meaningful keywords using NLP techniques with automatic fallbacks."""
+    if not text:
+        return []
+
+    def spacy_strategy() -> List[str]:
+        """Try spaCy for high-quality NLP processing."""
+        import spacy
+
+        nlp = spacy.load("en_core_web_sm")
+        doc = nlp(text)
+        # Extract nouns, adjectives, and proper nouns
+        return [token.lemma_ for token in doc if token.pos_ in ["NOUN", "ADJ", "PROPN"] and not token.is_stop and len(token.lemma_) > 2]
+
+    def nltk_strategy() -> List[str]:
+        """Try NLTK for good-quality NLP processing."""
+        import nltk
+        from nltk.corpus import stopwords
+        from nltk.stem import WordNetLemmatizer
+        from nltk.tokenize import word_tokenize
+
+        # Ensure required NLTK data is available
+        for data_name in ["punkt", "stopwords", "wordnet"]:
+            try:
+                nltk.data.find(f"tokenizers/{data_name}" if data_name == "punkt" else f"corpora/{data_name}")
+            except LookupError:
+                try:
+                    nltk.download(data_name, quiet=True)
+                except Exception:
+                    pass
+
+        tokens = word_tokenize(text)
+        stop_words = set(stopwords.words("english"))
+        lemmatizer = WordNetLemmatizer()
+
+        return [lemmatizer.lemmatize(token) for token in tokens if token.isalpha() and token not in stop_words and len(token) > 2]
+
+    def simple_fallback() -> List[str]:
+        """Simple regex-based keyword extraction as final fallback."""
+        words = preprocess_text(text).split()
+        # Filter out common words and short words
+        common_words = {"the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "an", "a"}
+        return [word for word in words if len(word) > 2 and word not in common_words]
+
+    if use_nlp:
+        # Chain the strategies: spaCy -> NLTK -> simple fallback
+        chain = ChainableFallback(simple_fallback)
+        chain.then(spacy_strategy).then(nltk_strategy)
+        return chain.execute()
+
+    # Skip NLP and use simple extraction directly
+    return simple_fallback()
+
+
+def analyze_title_patterns_core(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict:
+    """Core title pattern analysis logic without CLI output."""
+    from collections import Counter
+
+    from ..utils.audit import get_sender_subjects_from_cache
+    from ..utils.helpers import load_email_cache
+
+    results = {}
+
+    # Load email cache and get sender subjects
+    try:
+        cache = load_email_cache()
+        sender_subjects = get_sender_subjects_from_cache(cache)
+    except Exception:
+        sender_subjects = {}
+
+    # Sort by specified metric and get top senders
+    if by == "ignorance":
+        sorted_senders = sorted(audit_data, key=lambda x: x.get("ignorance_score", 0), reverse=True)
+    else:  # volume
+        sorted_senders = sorted(audit_data, key=lambda x: x.get("volume", 0), reverse=True)
+    top_senders = sorted_senders[:top_n]
+
+    for sender_data in top_senders:
+        sender = sender_data.get("from", "Unknown")  # CSV uses 'from' column
+        subjects = sender_subjects.get(sender, [])
+
+        if not subjects:
+            continue
+
+        # Extract keywords from all subjects
+        all_keywords = []
+        for subject in subjects:
+            keywords = extract_keywords_nlp(subject, use_nlp)
+            all_keywords.extend(keywords)
+
+        # Count keyword frequencies
+        keyword_counts = Counter(all_keywords)
+
+        # Get top keywords
+        top_keywords = keyword_counts.most_common(10)
+
+        results[sender] = {"sample_subject": subjects[0] if subjects else "", "top_keywords": top_keywords, "nlp_used": use_nlp}
+
+    return results

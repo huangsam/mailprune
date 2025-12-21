@@ -19,6 +19,9 @@ cd mailprune
 
 # Install dependencies along with mailprune in editable mode
 uv sync --editable
+
+# Optional: Install NLP dependencies for enhanced title pattern analysis
+uv sync --group nlp
 ```
 
 ## Usage
@@ -46,6 +49,9 @@ uv run mailprune engagement
 
 # Perform unsupervised clustering analysis on senders
 uv run mailprune cluster
+
+# Analyze title patterns for top senders (with optional NLP)
+uv run mailprune title-patterns --top-n 5 --by volume
 
 # Analyze specific sender patterns
 uv run mailprune sender "newsletter@company.com"

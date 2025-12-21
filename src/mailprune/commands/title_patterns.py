@@ -1,97 +1,67 @@
 """
-Title patterns command implementation for MailPrune.
+Enhanced title patterns command with NLP processing for MailPrune.
 """
 
-from collections import Counter
+from typing import Dict, List
 
 import click
 
-from mailprune.utils import (
-    filter_common_words,
-    get_sender_subjects_from_cache,
-    get_top_noise_makers,
-    get_top_senders_by_volume,
-    load_audit_data,
-    load_email_cache,
-)
+from mailprune.constants import DEFAULT_CACHE_PATH, DEFAULT_CSV_PATH
+from mailprune.utils.analysis import analyze_title_patterns_core, load_audit_data
 
 
-def analyze_title_patterns(cache_path: str, csv_path: str, top_n: int, by: str) -> None:
-    """Analyze title patterns for top senders (by volume or ignorance score).
+def analyze_title_patterns_enhanced(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict:
+    """Enhanced title pattern analysis with NLP."""
+    results = analyze_title_patterns_core(cache_path, audit_data, top_n, by, use_nlp)
 
-    This command examines the subject lines of emails from your top senders to
-    identify common patterns and themes. It helps understand what types of
-    content you're receiving and can inform cleanup decisions.
+    # Display results
+    click.echo(f"\nEnhanced Title Pattern Analysis (Top {top_n} Senders by {by})")
+    click.echo("=" * 60)
 
-    The analysis can rank senders by:
-    - Volume: Top senders by total email count
-    - Ignorance score: Top problematic senders (high volume + low engagement)
+    for sender, data in results.items():
+        click.echo(f"\nSender: {sender}")
+        click.echo(f"Sample Subject: {data['sample_subject']}")
+        click.echo(f"NLP Used: {data['nlp_used']}")
+        click.echo("Top Keywords:")
+        for keyword, count in data["top_keywords"]:
+            click.echo(f"  {keyword}: {count}")
 
-    For each selected sender, it shows:
-    - Total emails and engagement metrics
-    - Most common words in subject lines (excluding common stop words)
-    - Top subject line patterns
-    """
-    # Load cache
-    cache = load_email_cache()
-    if not cache:
-        click.echo(f"Error: {cache_path} not found. Run audit first.")
+    return results
+
+
+@click.command()
+@click.option("--top-n", default=5, help="Number of top senders to analyze")
+@click.option("--no-nlp", is_flag=True, help="Disable NLP processing (use simple extraction)")
+def title_patterns(top_n, no_nlp):
+    """Enhanced title pattern analysis with NLP processing."""
+    use_nlp = not no_nlp
+
+    if not DEFAULT_CSV_PATH.exists():
+        click.echo("No audit data found. Run 'mailprune audit' first.")
         return
 
-    # Group by sender and collect subjects
-    sender_subjects = get_sender_subjects_from_cache(cache)
+    audit_data = load_audit_data(DEFAULT_CSV_PATH)
 
-    # Select top senders based on ranking method
-    if by == "ignorance":
-        # Load CSV for ignorance score ranking
-        df = load_audit_data(csv_path)
-        if df.empty:
-            click.echo(f"Error: {csv_path} not found. Run audit first.")
-            return
+    if not audit_data:
+        click.echo("No audit data available.")
+        return
 
-        # Get top problematic senders by ignorance score
-        top_senders_data = get_top_noise_makers(df, top_n)
-        selected_senders = [(row["from"], row["ignorance_score"]) for _, row in top_senders_data.iterrows()]
-        title = f"=== 🚨 TITLE PATTERNS FOR TOP {top_n} PROBLEMATIC SENDERS ==="
-        subtitle = "(Ranked by ignorance score - high volume + low engagement)"
-    else:  # by == "volume"
-        # Get top senders by volume
-        selected_senders = get_top_senders_by_volume(sender_subjects, top_n)
-        title = f"=== 📧 TITLE PATTERNS FOR TOP {top_n} SENDERS ==="
-        subtitle = "(Ranked by email volume)"
+    results = analyze_title_patterns_enhanced(DEFAULT_CACHE_PATH, audit_data.to_dict("records"), top_n, "volume", use_nlp)
 
-    click.echo(title)
-    if by == "ignorance":
-        click.echo(subtitle)
-    click.echo()
+    if not results:
+        click.echo("No title pattern data available.")
+        return
 
-    for sender, score_or_count in selected_senders:
-        subjects = sender_subjects.get(sender, [])
+    click.echo(f"\nEnhanced Title Pattern Analysis (Top {top_n} Senders)")
+    click.echo("=" * 60)
 
-        if not subjects:
-            click.echo(f"## {sender}")
-            click.echo("No cached emails found for this sender")
-            continue
+    for sender, data in results.items():
+        click.echo(f"\nSender: {sender}")
+        click.echo(f"Sample Subject: {data['sample_subject']}")
+        click.echo(f"NLP Processing: {'Enabled' if data['nlp_used'] else 'Disabled (fallback)'}")
+        click.echo("Top Keywords:")
 
-        if by == "ignorance":
-            click.echo(f"## {sender} ({len(subjects)} emails, Score: {score_or_count:.0f})")
-        else:
-            click.echo(f"## {sender} ({score_or_count} emails)")
+        for keyword, count in data["top_keywords"]:
+            click.echo(f"  - {keyword}: {count}")
 
-        # Analyze common words in subjects
-        words = []
-        for subj in subjects:
-            # Split subject and filter out short/common words
-            subj_words = subj.split()
-            filtered_words = filter_common_words(subj_words)
-            words.extend(filtered_words)
-
-        if words:
-            word_counts = Counter(words).most_common(10)
-            click.echo("Common words in subjects:")
-            for word, count in word_counts:
-                click.echo(f"  • {word}: {count}")
-        else:
-            click.echo("No significant words found in subjects")
-
-        click.echo()
+    click.echo("\nNote: Install NLP libraries with 'uv sync --group nlp' for enhanced processing.")

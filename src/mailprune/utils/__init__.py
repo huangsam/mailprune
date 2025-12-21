@@ -25,21 +25,25 @@ from ..constants import (
 from .analysis import (
     analyze_sender_email_patterns,
     analyze_sender_patterns,
+    analyze_title_patterns_core,
     calculate_overall_metrics,
     cluster_senders_unsupervised,
     compare_metrics,
+    extract_keywords_nlp,
     filter_common_words,
     generate_cleanup_report,
     get_engagement_tiers,
     get_top_noise_makers,
     get_top_senders_by_volume,
     load_audit_data,
+    preprocess_text,
 )
 from .audit import (
     get_sender_subjects_from_cache,
 )
 from .helpers import (
     EMAIL_CATEGORIES,
+    ChainableFallback,
     calculate_percentage,
     format_sender_list,
     get_category_distribution,
@@ -65,18 +69,22 @@ __all__ = [
     # From analysis
     "analyze_sender_email_patterns",
     "analyze_sender_patterns",
+    "analyze_title_patterns_core",
     "calculate_overall_metrics",
     "cluster_senders_unsupervised",
     "compare_metrics",
+    "extract_keywords_nlp",
     "filter_common_words",
     "generate_cleanup_report",
     "get_engagement_tiers",
     "get_top_noise_makers",
     "get_top_senders_by_volume",
     "load_audit_data",
+    "preprocess_text",
     # From audit
     "get_sender_subjects_from_cache",
     # From helpers
+    "ChainableFallback",
     "EMAIL_CATEGORIES",
     "calculate_percentage",
     "format_sender_list",
