@@ -111,7 +111,7 @@ def sender(sender_name: str, csv_path: str):
 
 
 @cli.command()
-@click.option("--cache-path", default="data/email_cache.json", help="Path to the email cache file")
+@click.option("--cache-path", default=DEFAULT_CACHE_PATH, help=f"Path to email cache file (default: {DEFAULT_CACHE_PATH})")
 @click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file (required for ignorance ranking)")
 @click.option("--top-n", default=5, help="Number of top senders to analyze")
 @click.option("--by", default="volume", type=click.Choice(["volume", "ignorance"]), help="Rank senders by volume or ignorance score")
