@@ -8,7 +8,19 @@ from mailprune.utils import calculate_percentage, get_category_distribution, loa
 
 
 def show_summary(csv_path: str) -> None:
-    """Show email distribution summary and statistics."""
+    """Show email distribution summary and statistics.
+
+    This command provides a high-level overview of your email audit data,
+    highlighting key statistics and distributions that help understand your
+    email patterns.
+
+    The summary includes:
+    - Total emails and unique senders
+    - Top 10 senders by volume and noise impact
+    - Zero engagement senders (never opened)
+    - High volume senders (>50 emails)
+    - Email distribution across Gmail categories
+    """
     df = load_audit_data(csv_path)
     if df.empty:
         return

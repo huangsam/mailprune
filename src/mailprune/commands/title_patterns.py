@@ -17,7 +17,21 @@ from mailprune.utils import (
 
 
 def analyze_title_patterns(cache_path: str, csv_path: str, top_n: int, by: str) -> None:
-    """Analyze title patterns for top senders (by volume or ignorance score)."""
+    """Analyze title patterns for top senders (by volume or ignorance score).
+
+    This command examines the subject lines of emails from your top senders to
+    identify common patterns and themes. It helps understand what types of
+    content you're receiving and can inform cleanup decisions.
+
+    The analysis can rank senders by:
+    - Volume: Top senders by total email count
+    - Ignorance score: Top problematic senders (high volume + low engagement)
+
+    For each selected sender, it shows:
+    - Total emails and engagement metrics
+    - Most common words in subject lines (excluding common stop words)
+    - Top subject line patterns
+    """
     # Load cache
     cache = load_email_cache()
     if not cache:

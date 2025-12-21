@@ -16,7 +16,16 @@ from mailprune.utils import (
 
 
 def generate_report(csv_path: str) -> None:
-    """Generate a comprehensive email audit and cleanup report."""
+    """Generate a comprehensive email audit and cleanup report.
+
+    What the report includes:
+    - Current Status Overview
+    - Distribution Summary
+    - Engagement Breakdown
+    - Category Distribution
+    - Top Noise Makers
+    - Cleanup Recommendations
+    """
     df = load_audit_data(csv_path)
     if df.empty:
         return

@@ -13,7 +13,21 @@ from mailprune.utils import (
 
 
 def analyze_engagement(csv_path: str, tier: str) -> None:
-    """Analyze sender engagement patterns and tiers."""
+    """Analyze sender engagement patterns and tiers.
+
+    This command categorizes email senders into engagement tiers based on their
+    open rates and interaction patterns. It provides insights into how engaged
+    you are with different senders and helps identify opportunities for cleanup.
+
+    Engagement tiers include:
+    - High: Frequently opened senders
+    - Medium: Moderately engaged senders
+    - Low: Rarely opened senders
+    - Zero: Never opened senders
+
+    The analysis shows statistics for each tier and highlights top performers
+    in the high engagement category.
+    """
     df = load_audit_data(csv_path)
     if df.empty:
         return

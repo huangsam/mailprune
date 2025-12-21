@@ -8,7 +8,18 @@ from mailprune.utils import calculate_percentage, load_audit_data
 
 
 def analyze_unread_by_category(csv_path: str) -> None:
-    """Analyze unread emails grouped by Gmail categories."""
+    """Analyze unread emails grouped by Gmail categories.
+
+    This command breaks down your unread emails by Gmail's automatic categories
+    (Updates, Promotions, Social, Important) to help you understand where your
+    unread mail is accumulating.
+
+    The analysis shows:
+    - Total unread emails and percentage
+    - Distribution of unread emails across categories
+    - Category-specific statistics and recommendations
+    - Proportional allocation of unread emails per sender to categories
+    """
     df = load_audit_data(csv_path)
     if df.empty:
         return

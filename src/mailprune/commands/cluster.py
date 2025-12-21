@@ -11,7 +11,18 @@ from mailprune.utils import (
 
 
 def analyze_clusters(csv_path: str, n_clusters: int = 5) -> None:
-    """Analyze and display sender clusters for cleanup recommendations."""
+    """Analyze and display sender clusters for cleanup recommendations.
+
+    This command performs unsupervised clustering on email senders based on their
+    email volume, open rate, ignorance score, and unread count. It groups similar
+    senders together to help identify patterns and prioritize cleanup efforts.
+
+    The analysis includes:
+    - Clustering senders into the specified number of groups
+    - Displaying cluster statistics (total emails, average metrics)
+    - Showing top senders within each cluster
+    - Providing cleanup recommendations based on cluster characteristics
+    """
     df = load_audit_data(csv_path)
     if df.empty:
         click.echo("No audit data found. Run 'mailprune audit' first.")
