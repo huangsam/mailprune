@@ -12,6 +12,7 @@ mailprune/
 │   ├── commands/          # CLI command implementations
 │   │   ├── __init__.py   # Command package exports
 │   │   ├── audit.py      # Audit execution command
+│   │   ├── cluster.py    # Sender clustering analysis command
 │   │   ├── engagement.py # Engagement analysis command
 │   │   ├── report.py     # Comprehensive report command
 │   │   ├── summary.py    # Summary statistics command
@@ -95,6 +96,7 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 
 ### Command Modules
 - `src/mailprune/commands/audit.py` - High-level audit execution command
+- `src/mailprune/commands/cluster.py` - Sender clustering analysis command
 - `src/mailprune/commands/report.py` - Comprehensive email audit report generation
 - `src/mailprune/commands/summary.py` - Email distribution summary statistics
 - `src/mailprune/commands/engagement.py` - Sender engagement pattern analysis

@@ -11,6 +11,7 @@ Intelligent email management system that audits Gmail, identifies noise makers u
 - **Cache Pruning**: Automatically removes deleted emails from local cache between audit runs
 - **Parallel Processing**: Uses service pool for concurrent Gmail API calls to speed up auditing
 - **Title Pattern Analysis**: Analyzes email subject patterns for senders to understand content themes
+- **Sender Clustering**: Groups similar senders using unsupervised learning for targeted cleanup strategies
 - **CLI Tools**: Command-line interface for easy analysis and reporting
 
 ## Installation
@@ -47,6 +48,9 @@ uv run python scripts/mailprune.py engagement
 
 # Show detailed listing of zero engagement senders
 uv run python scripts/mailprune.py engagement --tier zero
+
+# Perform unsupervised clustering analysis on senders
+uv run python scripts/mailprune.py cluster
 
 # Analyze specific sender
 uv run python scripts/mailprune.py sender "newsletter@company.com"
