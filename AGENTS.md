@@ -25,7 +25,7 @@ git clone <repository-url>
 cd mailprune
 
 # Install dependencies
-uv sync
+uv sync --editable
 ```
 
 ## Testing
@@ -80,7 +80,7 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 - `src/mailprune/commands/unread_by_category.py` - Unread email analysis by Gmail categories
 
 ### CLI Entry Points
-- `scripts/mailprune.py` - Main unified CLI tool with all commands
+- `mailprune` - Main unified CLI tool with all commands (installed via entry point)
 
 ### Data Files
 - `data/noise_report.csv` - Generated audit results with sender metrics

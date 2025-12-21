@@ -17,8 +17,8 @@ Intelligent email management system that audits Gmail, identifies noise makers u
 gh repo clone huangsam/mailprune
 cd mailprune
 
-# Install dependencies
-uv sync
+# Install dependencies along with mailprune in editable mode
+uv sync --editable
 ```
 
 ## Usage
@@ -29,29 +29,29 @@ uv sync
 # Run a full email audit (requires Gmail API setup)
 # Follow instructions at https://developers.google.com/gmail/api/quickstart/python
 # Then place your credentials.json in the $REPO_ROOT/data directory
-uv run python scripts/mailprune.py audit --max-emails 2000
+uv run mailprune audit --max-emails 2000
 ```
 
 ### Analyzing Audit Results
 
 ```bash
 # Generate comprehensive email audit and cleanup report
-uv run python scripts/mailprune.py report
+uv run mailprune report
 
 # Show email distribution summary and statistics
-uv run python scripts/mailprune.py summary
+uv run mailprune summary
 
 # Analyze sender engagement patterns and tiers
-uv run python scripts/mailprune.py engagement
+uv run mailprune engagement
 
 # Perform unsupervised clustering analysis on senders
-uv run python scripts/mailprune.py cluster
+uv run mailprune cluster
 
 # Analyze specific sender patterns
-uv run python scripts/mailprune.py sender "newsletter@company.com"
+uv run mailprune sender "newsletter@company.com"
 ```
 
-Run `uv run python scripts/mailprune.py --help` for more commands and options.
+Run `uv run mailprune --help` for more commands and options.
 
 ## For AI Agents and Automated Tools
 

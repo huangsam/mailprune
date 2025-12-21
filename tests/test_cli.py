@@ -13,7 +13,7 @@ sys.path.insert(0, str(src_path))
 import pytest  # noqa: E402
 from click.testing import CliRunner  # noqa: E402
 
-from scripts.mailprune import cli  # noqa: E402
+from mailprune.cli import cli  # noqa: E402
 
 
 @pytest.fixture

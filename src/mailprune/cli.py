@@ -1,31 +1,14 @@
-#!/usr/bin/env python3
 """
-MailPrune - Email Audit and Analysis Tool
+MailPrune CLI Entry Point
 
-A comprehensive tool for auditing Gmail and identifying email noise patterns.
-Combines audit execution and result analysis in a single interface.
+This module provides the main CLI entry point for the MailPrune application.
 """
 
 import logging
-import sys
-from pathlib import Path
 
 import click
 
-# Set up logging
-logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
-# Add the src directory to the path so we can import mailprune
-project_root = Path(__file__).parent.parent
-src_path = project_root / "src"
-sys.path.insert(0, str(src_path))
-
-from mailprune import (  # noqa: E402
-    analyze_sender_patterns,
-    load_audit_data,
-)
-from mailprune.commands import (  # noqa: E402
+from mailprune.commands import (
     analyze_clusters,
     analyze_engagement,
     analyze_title_patterns,
@@ -34,6 +17,14 @@ from mailprune.commands import (  # noqa: E402
     perform_audit,
     show_summary,
 )
+from mailprune.utils import (
+    analyze_sender_patterns,
+    load_audit_data,
+)
+
+# Set up logging
+logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -151,7 +142,3 @@ def unread_by_category(csv_path: str):
 def cluster(csv_path: str, n_clusters: int):
     """Analyze sender clusters for cleanup recommendations using unsupervised learning."""
     analyze_clusters(csv_path, n_clusters)
-
-
-if __name__ == "__main__":
-    cli()
