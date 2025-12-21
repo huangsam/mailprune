@@ -1,7 +1,7 @@
 [project]
 name = "mailprune"
 version = "0.1.0"
-description = "Add your description here"
+description = "Intelligent email management system that identifies noise makers and provides cleanup strategies"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

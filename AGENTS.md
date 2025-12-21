@@ -9,7 +9,6 @@ mailprune/
 ├── src/mailprune/          # Core package
 │   ├── commands/          # CLI command implementations
 │   └── utils/             # Utility modules
-├── scripts/               # Executable scripts
 ├── tests/                 # Test suite
 ├── data/                  # Data files and cache
 ├── pyproject.toml         # Project configuration and dependencies
