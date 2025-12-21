@@ -14,11 +14,14 @@ Intelligent email management system that audits Gmail, identifies noise makers u
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+gh repo clone huangsam/mailprune
 cd mailprune
 
 # Install dependencies
 uv sync
+
+# Set up Gmail API credentials
+# Follow instructions at https://developers.google.com/gmail/api/quickstart/python
 ```
 
 ## Usage
