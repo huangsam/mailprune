@@ -19,9 +19,6 @@ cd mailprune
 
 # Install dependencies along with mailprune in editable mode
 uv sync --editable
-
-# Optional: Install NLP dependencies for enhanced content pattern analysis
-uv sync --group nlp
 ```
 
 ## Usage
