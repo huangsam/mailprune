@@ -75,7 +75,7 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 - `src/mailprune/commands/report.py` - Comprehensive email audit report generation
 - `src/mailprune/commands/summary.py` - Email distribution summary statistics
 - `src/mailprune/commands/engagement.py` - Sender engagement pattern analysis
-- `src/mailprune/commands/title_patterns.py` - Title pattern analysis for senders
+- `src/mailprune/commands/patterns.py` - Content pattern analysis for senders
 - `src/mailprune/commands/unread_by_category.py` - Unread email analysis by Gmail categories
 
 ### CLI Entry Points

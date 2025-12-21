@@ -1,5 +1,5 @@
 """
-Enhanced content patterns command with NLP processing for MailPrune.
+Content patterns command with NLP processing for MailPrune.
 Analyzes email content snippets for comprehensive pattern recognition.
 """
 
@@ -10,13 +10,13 @@ import click
 from mailprune.utils.analysis import analyze_title_patterns_core
 
 
-def analyze_content_patterns_enhanced(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict:
-    """Enhanced content pattern analysis using full email snippets."""
+def analyze_patterns(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict:
+    """Analyze content patterns for top senders using email snippets."""
     results = analyze_title_patterns_core(cache_path, audit_data, top_n, by, use_nlp)
 
     # Display results
-    click.echo(f"\nEnhanced Content Pattern Analysis (Top {top_n} Senders by {by})")
-    click.echo("=" * 70)
+    click.echo(f"\nContent Pattern Analysis (Top {top_n} Senders by {by})")
+    click.echo("=" * 60)
 
     for sender, data in results.items():
         click.echo(f"\nSender: {sender}")

@@ -10,7 +10,7 @@ import click
 
 from mailprune.commands import (
     analyze_clusters,
-    analyze_content_patterns_enhanced,  # Updated from analyze_title_patterns_enhanced
+    analyze_patterns,  # Updated from analyze_title_patterns_enhanced
     analyze_engagement,
     analyze_unread_by_category,
     generate_report,
@@ -116,7 +116,7 @@ def sender(sender_name: str, csv_path: str):
 @click.option("--top-n", default=5, help="Number of top senders to analyze")
 @click.option("--by", default="volume", type=click.Choice(["volume", "ignorance"]), help="Rank senders by volume or ignorance score")
 @click.option("--use-nlp/--no-nlp", default=True, help="Use NLP for enhanced keyword extraction")
-def title_patterns(cache_path: str, csv_path: str, top_n: int, by: str, use_nlp: bool):
+def patterns(cache_path: str, csv_path: str, top_n: int, by: str, use_nlp: bool):
     """Analyze content patterns for top senders using email snippets (by volume or ignorance score)."""
     df = load_audit_data(csv_path)
     if df.empty:
@@ -124,7 +124,7 @@ def title_patterns(cache_path: str, csv_path: str, top_n: int, by: str, use_nlp:
         return
 
     audit_data = df.to_dict("records")
-    analyze_content_patterns_enhanced(cache_path, audit_data, top_n, by, use_nlp)
+    analyze_patterns(cache_path, audit_data, top_n, by, use_nlp)
 
 
 @cli.command()
