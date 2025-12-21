@@ -312,54 +312,19 @@ uv run mailprune patterns --top-n 5 --by volume
 
 ## FAQ
 
-### Setup Issues
-
-**Q: "Gmail API has not been used in project" error?**
-A: Make sure you've enabled the Gmail API in Google Cloud Console and the credentials are for the correct project.
-
-**Q: Authentication keeps failing?**
-A: Delete `data/token.json` and re-run the audit command. Make sure you're using the correct Google account.
-
-**Q: "credentials.json not found"?**
-A: Ensure the file is in the `data/` directory, not `data/credentials/` or elsewhere.
-
-### Assessment Issues
-
-**Q: Commands run but no output?**
-A: Check that you have emails in your account. Try with a smaller `--max-emails` value first.
-
-**Q: Analysis shows no patterns?**
-A: You may need more email data. Try increasing `--max-emails` or ensure you have diverse senders.
-
-**Q: Clustering fails?**
-A: Need at least 10-15 senders for meaningful clustering. Try with more emails.
-
-### Performance Issues
-
-**Q: Audit takes too long?**
-A: Reduce `--max-emails` to 500-1000 for faster analysis. Full analysis of 2000+ emails can take 10-15 minutes.
-
-**Q: Memory errors?**
-A: Close other applications and try with fewer emails. The tool processes emails in batches.
-
-### Gmail Integration
-
-**Q: Filters not working?**
-A: Check Gmail filter syntax. Test filters manually first. Ensure you're applying them to the correct account.
-
-**Q: Can't create filters?**
-A: Make sure you're in Gmail web interface, not mobile app. Some Gmail features require web access.
-
-### General Questions
-
-**Q: Is my data secure?**
-A: Yes - analysis happens locally. Only email metadata (subject, sender, dates) is processed, not content.
-
-**Q: Can I run this on multiple accounts?**
-A: Yes, but you'll need separate credentials and data directories for each account.
-
-**Q: How often should I run assessments?**
-A: Monthly for maintenance, quarterly for deep review, or whenever you feel overwhelmed by emails.
-
-**Q: What if I don't use Gmail?**
-A: Currently only Gmail is supported via the Gmail API. Other email providers would require different APIs.
+| Category | Question | Answer |
+|----------|----------|--------|
+| **Setup Issues** | "Gmail API has not been used in project" error? | Make sure you've enabled the Gmail API in Google Cloud Console and the credentials are for the correct project. |
+| **Setup Issues** | Authentication keeps failing? | Delete `data/token.json` and re-run the audit command. Make sure you're using the correct Google account. |
+| **Setup Issues** | "credentials.json not found"? | Ensure the file is in the `data/` directory, not `data/credentials/` or elsewhere. |
+| **Assessment Issues** | Commands run but no output? | Check that you have emails in your account. Try with a smaller `--max-emails` value first. |
+| **Assessment Issues** | Analysis shows no patterns? | You may need more email data. Try increasing `--max-emails` or ensure you have diverse senders. |
+| **Assessment Issues** | Clustering fails? | Need at least 10-15 senders for meaningful clustering. Try with more emails. |
+| **Performance Issues** | Audit takes too long? | Reduce `--max-emails` to 500-1000 for faster analysis. Full analysis of 2000+ emails can take 10-15 minutes. |
+| **Performance Issues** | Memory errors? | Close other applications and try with fewer emails. The tool processes emails in batches. |
+| **Gmail Integration** | Filters not working? | Check Gmail filter syntax. Test filters manually first. Ensure you're applying them to the correct account. |
+| **Gmail Integration** | Can't create filters? | Make sure you're in Gmail web interface, not mobile app. Some Gmail features require web access. |
+| **General Questions** | Is my data secure? | Yes - analysis happens locally. Only email metadata (subject, sender, dates) is processed, not content. |
+| **General Questions** | Can I run this on multiple accounts? | Yes, but you'll need separate credentials and data directories for each account. |
+| **General Questions** | How often should I run assessments? | Monthly for maintenance, quarterly for deep review, or whenever you feel overwhelmed by emails. |
+| **General Questions** | What if I don't use Gmail? | Currently only Gmail is supported via the Gmail API. Other email providers would require different APIs. |
