@@ -69,17 +69,18 @@ class TestCLICommands:
         assert "TOP 10 NOISE MAKERS" in result.output
         assert "CLEANUP RECOMMENDATIONS" in result.output
 
-    def test_unread_by_category_command(self, runner, sample_csv):
-        """Test the unread-by-category command."""
-        result = runner.invoke(cli, ["unread-by-category", "--csv-path", sample_csv])
+    def test_report_brief_command(self, runner, sample_csv):
+        """Test the report command with --brief flag."""
+        result = runner.invoke(cli, ["report", "--brief", "--csv-path", sample_csv])
 
         assert result.exit_code == 0
-        assert "UNREAD EMAILS BY CATEGORY" in result.output
-        assert "Total Unread Emails: 46 out of 63" in result.output
-        assert "CLEANUP RECOMMENDATIONS FOR UNREAD EMAILS" in result.output
-        assert "PROMOTIONS" in result.output
-        assert "UPDATES" in result.output
-        assert "IMPORTANT" in result.output
+        assert "EMAIL AUDIT SUMMARY" in result.output
+        assert "5 unique senders" in result.output
+        assert "63 total emails" in result.output
+        assert "TOP PRIORITIES" in result.output
+        # Should not contain full report sections
+        assert "COMPREHENSIVE EMAIL AUDIT REPORT" not in result.output
+        assert "TOP 10 NOISE MAKERS" not in result.output
 
     def test_help_command(self, runner):
         """Test the help command."""
@@ -90,4 +91,3 @@ class TestCLICommands:
         assert "audit" in result.output
         assert "report" in result.output
         assert "sender" in result.output
-        assert "unread-by-category" in result.output

@@ -15,7 +15,7 @@ from mailprune.utils import (
 )
 
 
-def generate_report(csv_path: str) -> None:
+def generate_report(csv_path: str, brief: bool = False) -> None:
     """Generate a comprehensive email audit and cleanup report.
 
     What the report includes:
@@ -113,5 +113,25 @@ def generate_report(csv_path: str) -> None:
         top_engaged = high_engagement.nlargest(3, "total_volume")
         for _, row in top_engaged.iterrows():
             report.append(f"      • {row['from'][:40]:<40} ({int(row['total_volume'])} emails, {row['open_rate']:.1f}% open)")
+
+    if brief:
+        # Brief summary mode
+        brief_report = []
+        brief_report.append("=== 📧 EMAIL AUDIT SUMMARY ===")
+        brief_report.append("")
+        brief_report.append("📊 QUICK STATS")
+        brief_report.append(f"   • {len(df)} unique senders")
+        brief_report.append(f"   • {int(current_metrics['total_emails'])} total emails")
+        brief_report.append(f"   • Unread Rate: {current_metrics['unread_percentage']:.1f}%")
+        brief_report.append(f"   • Average Open Rate: {current_metrics['average_open_rate']:.1f}%")
+        brief_report.append("")
+        brief_report.append("🎯 TOP PRIORITIES")
+        top_noise = get_top_noise_makers(df, 3)
+        for _, row in top_noise.iterrows():
+            brief_report.append(f"   • {row['from'][:35]:<35} ({int(row['total_volume'])} emails, score: {row['ignorance_score']:.0f})")
+        brief_report.append("")
+        brief_report.append("💡 Run 'mailprune report' for full analysis")
+        click.echo("\n".join(brief_report))
+        return
 
     click.echo("\n".join(report))

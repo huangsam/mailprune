@@ -12,10 +12,8 @@ from mailprune.commands import (
     analyze_clusters,
     analyze_patterns,  # Updated from analyze_title_patterns_enhanced
     analyze_engagement,
-    analyze_unread_by_category,
     generate_report,
     perform_audit,
-    show_summary,
 )
 from mailprune.constants import DEFAULT_CACHE_PATH, DEFAULT_MAX_EMAILS
 from mailprune.utils import (
@@ -85,9 +83,10 @@ def audit(max_emails: int, query: str, cache_path: str) -> None:
 
 @cli.command()
 @click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
-def report(csv_path: str):
+@click.option("--brief", is_flag=True, help="Show brief summary instead of full report")
+def report(csv_path: str, brief: bool):
     """Generate a comprehensive email audit and cleanup report."""
-    generate_report(csv_path)
+    generate_report(csv_path, brief)
 
 
 @cli.command()
@@ -129,24 +128,10 @@ def patterns(cache_path: str, csv_path: str, top_n: int, by: str, use_nlp: bool)
 
 @cli.command()
 @click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
-def summary(csv_path: str):
-    """Show email distribution summary and statistics."""
-    show_summary(csv_path)
-
-
-@cli.command()
-@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
 @click.option("--tier", type=click.Choice(["high", "medium", "low", "zero", "all"]), default="all", help="Show detailed listing for specific engagement tier")
 def engagement(csv_path: str, tier: str):
     """Analyze sender engagement patterns and tiers."""
     analyze_engagement(csv_path, tier)
-
-
-@cli.command()
-@click.option("--csv-path", default="data/noise_report.csv", help="Path to the audit CSV file")
-def unread_by_category(csv_path: str):
-    """Analyze unread emails grouped by Gmail categories."""
-    analyze_unread_by_category(csv_path)
 
 
 @cli.command()
