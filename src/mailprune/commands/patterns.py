@@ -38,6 +38,14 @@ def analyze_patterns(cache_path: str, audit_data: List[Dict], top_n: int = 5, by
         click.echo(f"Sample Subject: {data['sample_subject']}")
         click.echo(f"Emails Analyzed: {data['email_count']}")
         click.echo(f"NLP Processing: {'Enabled' if data['nlp_used'] else 'Disabled'}")
+        # Display top intents
+        top_intents = data.get("top_intents", [("unknown", 0)])
+        if top_intents and len(top_intents) > 0:
+            intent_strs = [f"{intent} ({score})" for intent, score in top_intents if score > 0]
+            if intent_strs:
+                click.echo(f"Top Intents: {', '.join(intent_strs)}")
+            else:
+                click.echo("Top Intents: unknown")
 
         click.echo("Top Keywords from Email Content:")
         keyword_strs = [f"{keyword} ({count})" for keyword, count in data["top_keywords"]]

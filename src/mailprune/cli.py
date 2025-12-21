@@ -116,7 +116,11 @@ def sender(sender_name: str, csv_path: str):
 @click.option("--by", default="volume", type=click.Choice(["volume", "ignorance"]), help="Rank senders by volume or ignorance score")
 @click.option("--use-nlp/--no-nlp", default=True, help="Use NLP for enhanced keyword extraction")
 def patterns(cache_path: str, csv_path: str, top_n: int, by: str, use_nlp: bool):
-    """Analyze content patterns for top senders using email snippets (by volume or ignorance score)."""
+    """Analyze content patterns for top senders using email snippets (by volume or ignorance score).
+
+    Includes automatic intent inference using NLP to classify emails as promotional, transactional,
+    informational, social, or unknown.
+    """
     df = load_audit_data(csv_path)
     if df.empty:
         click.echo("No audit data found. Run 'mailprune audit' first.")

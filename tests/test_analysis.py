@@ -21,6 +21,7 @@ from mailprune import (  # noqa: E402
     compare_metrics,
     generate_cleanup_report,
     get_top_noise_makers,
+    infer_intent_nlp,
     load_audit_data,
 )
 
@@ -143,3 +144,34 @@ class TestAnalysisFunctions:
         small_df = sample_audit_data.head(2)
         clusters = cluster_senders_unsupervised(small_df, n_clusters=5)
         assert clusters == {}
+
+    def test_infer_intent_nlp(self):
+        """Test intent inference using NLP."""
+        # Test promotional content
+        promo_text = "Buy now and save 50% on our limited time offer! Subscribe to our newsletter for exclusive deals."
+        intent = infer_intent_nlp(promo_text, use_nlp=True)
+        assert intent == "promotional"
+
+        # Test transactional content
+        trans_text = "Your order has been confirmed. Payment of $25.99 has been processed. Receipt attached."
+        intent = infer_intent_nlp(trans_text, use_nlp=True)
+        assert intent == "transactional"
+
+        # Test informational content
+        info_text = "Update: Your account status has changed. Please review the attached report."
+        intent = infer_intent_nlp(info_text, use_nlp=True)
+        assert intent == "informational"
+
+        # Test unknown content
+        unknown_text = "Hello, how are you doing today?"
+        intent = infer_intent_nlp(unknown_text, use_nlp=True)
+        assert intent == "unknown"
+
+        # Test top N intents
+        mixed_text = "Buy now and save! Your order is confirmed. Account update available."
+        top_intents = infer_intent_nlp(mixed_text, use_nlp=True, top_n=3)
+        assert isinstance(top_intents, list)
+        assert len(top_intents) <= 3
+        # Should have promotional and transactional as top intents
+        intent_names = [intent for intent, score in top_intents]
+        assert "promotional" in intent_names or "transactional" in intent_names

@@ -4,7 +4,7 @@ Provides functions to analyze email audit data and generate insights.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -407,7 +407,121 @@ def extract_entities_nlp(text: str, use_nlp: bool = True) -> Dict[str, List[str]
     return entities
 
 
-def analyze_title_patterns_core(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict:
+def infer_intent_nlp(text: str, use_nlp: bool = True, top_n: int = 1) -> Union[str, List[Tuple[str, int]]]:
+    """
+    Infer email intent using NLP analysis of content.
+    Classifies emails into categories: promotional, transactional, informational, social, or unknown.
+
+    Args:
+        text: The text content to analyze
+        use_nlp: Whether to use NLP processing
+        top_n: Number of top intents to return (1 returns just the top intent as string, >1 returns list of tuples)
+
+    Returns:
+        If top_n == 1: Single intent string
+        If top_n > 1: List of (intent, score) tuples sorted by score descending
+    """
+    if not text or not use_nlp:
+        return "unknown" if top_n == 1 else [("unknown", 0)]
+
+    try:
+        nlp = get_spacy_model()
+        if not nlp:
+            return "unknown" if top_n == 1 else [("unknown", 0)]
+
+        doc = nlp(text.lower())
+
+        # Define intent keywords and patterns
+        intent_patterns = {
+            "promotional": [
+                "buy",
+                "sale",
+                "discount",
+                "offer",
+                "deal",
+                "save",
+                "free",
+                "limited",
+                "exclusive",
+                "subscribe",
+                "newsletter",
+                "marketing",
+                "advertisement",
+                "promotion",
+                "coupon",
+            ],
+            "transactional": [
+                "receipt",
+                "invoice",
+                "payment",
+                "order",
+                "confirmation",
+                "shipping",
+                "delivered",
+                "purchase",
+                "billing",
+                "account",
+                "transaction",
+                "charged",
+                "refund",
+            ],
+            "informational": [
+                "update",
+                "news",
+                "alert",
+                "notification",
+                "report",
+                "summary",
+                "status",
+                "announcement",
+                "reminder",
+                "schedule",
+                "meeting",
+                "event",
+            ],
+            "social": ["friend", "connect", "follow", "like", "share", "comment", "post", "message", "invite", "group", "community", "network"],
+        }
+
+        # Count matches for each intent
+        intent_scores = dict.fromkeys(intent_patterns, 0)
+
+        for token in doc:
+            lemma = token.lemma_
+            for intent, keywords in intent_patterns.items():
+                if lemma in keywords:
+                    intent_scores[intent] += 1
+
+        # Also check for entity-based clues
+        entities = extract_entities_nlp(text, use_nlp)
+        if "MONEY" in entities:
+            intent_scores["transactional"] += 2
+        if "ORG" in entities and any("newsletter" in ent.lower() for ent in entities["ORG"]):
+            intent_scores["promotional"] += 2
+
+        # Return the intent(s) with the highest score(s), or "unknown" if no clear intent
+        max_score = max(intent_scores.values())
+        if max_score > 0:
+            # Sort intents by score descending
+            sorted_intents = sorted(intent_scores.items(), key=lambda x: x[1], reverse=True)
+            top_intents = sorted_intents[:top_n]
+            if top_n == 1:
+                return top_intents[0][0]  # Backward compatibility: return single string
+            return top_intents  # Return list of (intent, score) tuples
+        else:
+            return "unknown" if top_n == 1 else [("unknown", 0)]
+
+    except Exception as e:
+        logger.debug(f"Intent inference failed: {e}")
+        return "unknown" if top_n == 1 else [("unknown", 0)]
+
+
+def analyze_title_patterns_core(
+    cache_path: str,
+    audit_data: List[Dict],
+    top_n: int = 5,
+    by: str = "volume",
+    use_nlp: bool = True,
+) -> Dict:
     """Core content pattern analysis using email snippets for richer NLP analysis."""
     from collections import Counter
 
@@ -465,6 +579,16 @@ def analyze_title_patterns_core(cache_path: str, audit_data: List[Dict], top_n: 
             entity_counts = Counter(values)
             top_entities[label] = entity_counts.most_common(5)
 
+        # Infer intent if requested
+        top_intents = [("unknown", 0)]
+        combined_content = " ".join(snippets)
+        intent_result = infer_intent_nlp(combined_content, use_nlp, top_n=3)
+        if isinstance(intent_result, list):
+            top_intents = intent_result
+        else:
+            # Backward compatibility: single string result
+            top_intents = [(intent_result, 1)]
+
         # Get a sample subject for display (from audit data or cache)
         sample_subject = sender_data.get("sample_subject", "")
         if not sample_subject:
@@ -478,6 +602,7 @@ def analyze_title_patterns_core(cache_path: str, audit_data: List[Dict], top_n: 
             "top_keywords": top_keywords,
             "top_entities": top_entities,
             "nlp_used": use_nlp,
+            "top_intents": top_intents,
         }
 
     return results

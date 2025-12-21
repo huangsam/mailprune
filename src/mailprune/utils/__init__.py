@@ -35,6 +35,7 @@ from .analysis import (
     get_engagement_tiers,
     get_top_noise_makers,
     get_top_senders_by_volume,
+    infer_intent_nlp,
     load_audit_data,
     preprocess_text,
 )
@@ -78,6 +79,7 @@ __all__ = [
     "get_engagement_tiers",
     "get_top_noise_makers",
     "get_top_senders_by_volume",
+    "infer_intent_nlp",
     "load_audit_data",
     "preprocess_text",
     # From audit

@@ -22,6 +22,7 @@ from .utils import (
     compare_metrics,
     generate_cleanup_report,
     get_top_noise_makers,
+    infer_intent_nlp,
     load_audit_data,
 )
 
@@ -47,6 +48,7 @@ __all__ = [
     "compare_metrics",
     "generate_cleanup_report",
     "get_top_noise_makers",
+    "infer_intent_nlp",
     "load_audit_data",
 ]
 
