@@ -76,9 +76,11 @@ def audit(max_emails: int, query: str, cache_path: str) -> None:
     logger.info(f"Running Phase 1 Audit with {max_emails} emails...")
     audit_summary = perform_audit(max_emails, query, cache_path)
 
-    if audit_summary is not None:
-        click.echo("Top 10 Noise Makers by Ignorance Score:")
-        click.echo(audit_summary.head(10)[["from", "total_volume", "open_rate", "avg_recency_days", "ignorance_score"]].to_string(index=False))
+    if audit_summary is None:
+        raise click.ClickException("Failed to perform audit. Check that Gmail credentials are properly configured.")
+
+    click.echo("Top 10 Noise Makers by Ignorance Score:")
+    click.echo(audit_summary.head(10)[["from", "total_volume", "open_rate", "avg_recency_days", "ignorance_score"]].to_string(index=False))
 
 
 @cli.command()

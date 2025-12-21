@@ -91,3 +91,118 @@ class TestCLICommands:
         assert "audit" in result.output
         assert "report" in result.output
         assert "sender" in result.output
+
+    def test_audit_command_missing_credentials(self, runner, tmp_path, monkeypatch):
+        """Test the audit command when credentials are missing."""
+        # Change to temp directory without credentials
+        monkeypatch.chdir(tmp_path)
+
+        result = runner.invoke(cli, ["audit", "--max-emails", "10"])
+
+        # Should exit with error code when credentials are missing
+        assert result.exit_code == 1
+        assert "Failed to perform audit" in result.output
+        assert "credentials" in result.output.lower()
+
+    def test_patterns_command_no_data(self, runner, tmp_path):
+        """Test the patterns command when no audit data exists."""
+        # Create empty data directory
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        empty_csv = data_dir / "noise_report.csv"
+        empty_csv.write_text("from,total_volume,open_rate,ignorance_score,unread_count\n")
+
+        result = runner.invoke(cli, ["patterns", "--csv-path", str(empty_csv)])
+
+        assert result.exit_code == 0
+        assert "No audit data found" in result.output
+
+    def test_patterns_command_with_data(self, runner, sample_csv, tmp_path):
+        """Test the patterns command with valid data."""
+        # Create a mock cache file
+        cache_dir = tmp_path / "data"
+        cache_dir.mkdir(exist_ok=True)
+        cache_file = cache_dir / "email_cache.json"
+        cache_file.write_text('{"test@example.com": {"subjects": ["Test Subject"], "bodies": ["Test body content"]}}')
+
+        result = runner.invoke(cli, ["patterns", "--csv-path", sample_csv, "--cache-path", str(cache_file), "--top-n", "2"])
+
+        assert result.exit_code == 0
+        assert "Content Pattern Analysis" in result.output
+
+    def test_engagement_command(self, runner, sample_csv):
+        """Test the engagement command."""
+        result = runner.invoke(cli, ["engagement", "--csv-path", sample_csv])
+
+        assert result.exit_code == 0
+        assert "ENGAGEMENT ANALYSIS" in result.output
+        assert "engagement" in result.output.lower()
+
+    def test_engagement_command_specific_tier(self, runner, sample_csv):
+        """Test the engagement command with specific tier filter."""
+        result = runner.invoke(cli, ["engagement", "--csv-path", sample_csv, "--tier", "high"])
+
+        assert result.exit_code == 0
+        assert "HIGH ENGAGEMENT" in result.output
+
+    def test_cluster_command(self, runner, sample_csv):
+        """Test the cluster command."""
+        result = runner.invoke(cli, ["cluster", "--csv-path", sample_csv, "--n-clusters", "3"])
+
+        assert result.exit_code == 0
+        assert "UNSUPERVISED SENDER CLUSTERING" in result.output
+        assert "CLUSTER" in result.output
+
+    def test_cluster_command_insufficient_data(self, runner, tmp_path):
+        """Test the cluster command with insufficient data."""
+        # Create CSV with only 1 sender
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        small_csv = data_dir / "noise_report.csv"
+        small_csv.write_text("from,total_volume,open_rate,ignorance_score,unread_count\ntest@example.com,5,50.0,100,2\n")
+
+        result = runner.invoke(cli, ["cluster", "--csv-path", str(small_csv), "--n-clusters", "3"])
+
+        # Should still work but may show warnings
+        assert result.exit_code == 0
+
+    # Error scenario tests
+    def test_report_command_file_not_found(self, runner):
+        """Test the report command with non-existent file."""
+        result = runner.invoke(cli, ["report", "--csv-path", "nonexistent.csv"])
+
+        # Commands handle missing files gracefully
+        assert result.exit_code == 0
+        assert "not found" in result.output.lower() or "error" in result.output.lower()
+
+    def test_sender_command_file_not_found(self, runner):
+        """Test the sender command with non-existent file."""
+        result = runner.invoke(cli, ["sender", "test", "--csv-path", "nonexistent.csv"])
+
+        # Commands handle missing files gracefully
+        assert result.exit_code == 0
+        assert "not found" in result.output.lower() or "error" in result.output.lower()
+
+    def test_patterns_command_invalid_csv(self, runner, tmp_path):
+        """Test the patterns command with malformed CSV."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        invalid_csv = data_dir / "noise_report.csv"
+        invalid_csv.write_text("invalid,csv,data\nnot,enough,columns\n")
+
+        result = runner.invoke(cli, ["patterns", "--csv-path", str(invalid_csv)])
+
+        # Should handle gracefully
+        assert result.exit_code == 0  # Commands handle errors gracefully
+
+    def test_cluster_command_empty_csv(self, runner, tmp_path):
+        """Test the cluster command with empty CSV."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        empty_csv = data_dir / "noise_report.csv"
+        empty_csv.write_text("from,total_volume,open_rate,ignorance_score,unread_count\n")
+
+        result = runner.invoke(cli, ["cluster", "--csv-path", str(empty_csv)])
+
+        assert result.exit_code == 0
+        assert "No audit data found" in result.output

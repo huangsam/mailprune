@@ -175,3 +175,29 @@ class TestAnalysisFunctions:
         # Should have promotional and transactional as top intents
         intent_names = [intent for intent, score in top_intents]
         assert "promotional" in intent_names or "transactional" in intent_names
+
+    def test_infer_intent_nlp_empty_text(self):
+        """Test infer_intent_nlp with empty text."""
+        result = infer_intent_nlp("", use_nlp=True)
+        assert result == "unknown"
+
+    def test_infer_intent_nlp_no_nlp(self):
+        """Test infer_intent_nlp without NLP."""
+        text = "Buy now and save 50%!"
+        result = infer_intent_nlp(text, use_nlp=False)
+        assert result == "unknown"  # Should fallback when NLP disabled
+
+    def test_load_audit_data_invalid_format(self, tmp_path):
+        """Test load_audit_data with invalid CSV format."""
+        invalid_csv = tmp_path / "invalid.csv"
+        invalid_csv.write_text("not,a,valid,csv,format\nwith,wrong,number,of,cols\n")
+
+        result = load_audit_data(str(invalid_csv))
+        # Should handle gracefully and return empty or partial DataFrame
+        assert isinstance(result, pd.DataFrame)
+
+    def test_analyze_sender_email_patterns_missing_data(self):
+        """Test analyze_sender_email_patterns with missing email data."""
+        result = analyze_sender_email_patterns([])
+        assert isinstance(result, tuple)
+        assert len(result) == 3  # Should return three lists
