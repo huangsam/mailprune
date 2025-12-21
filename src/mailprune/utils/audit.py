@@ -1,8 +1,8 @@
 import logging
 import os
-import queue
+import random
+import time
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -11,11 +11,11 @@ import pandas as pd
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 from ..constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_CREDENTIALS_PATH,
-    DEFAULT_POOL_SIZE,
     DEFAULT_TOKEN_PATH,
     GMAIL_API_SCOPES,
     GMAIL_API_SERVICE_NAME,
@@ -27,26 +27,21 @@ from .helpers import load_email_cache
 logger = logging.getLogger(__name__)
 
 
-class GmailServicePool:
-    """Thread-safe pool of Gmail API service instances."""
-
-    def __init__(self, token_path: str, pool_size: int = DEFAULT_POOL_SIZE):
-        self.pool: queue.Queue[Any] = queue.Queue(maxsize=pool_size)
-        self.creds = Credentials.from_authorized_user_file(token_path, GMAIL_API_SCOPES)
-
-        # Pre-initialize the pool with authorized service instances
-        for _ in range(pool_size):
-            # Each thread must have its own service instance
-            service = build(GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, credentials=self.creds)
-            self.pool.put(service)
-
-    def get_service(self):
-        """Get a service instance from the pool."""
-        return self.pool.get()
-
-    def return_service(self, service):
-        """Return a service instance to the pool."""
-        self.pool.put(service)
+def execute_batch_with_retry(batch, max_retries=5):
+    """Execute a Gmail API batch request with exponential backoff retry on rate limits."""
+    for attempt in range(max_retries):
+        try:
+            batch.execute()
+            return
+        except HttpError as e:
+            if e.resp.status == 429:  # Rate limit exceeded
+                wait_time = (2**attempt) + random.uniform(0, 1)  # Exponential backoff with jitter
+                logger.warning(f"Rate limited on batch execute, retrying in {wait_time:.2f}s (attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+                continue
+            else:
+                raise  # Re-raise non-rate-limit errors
+    raise HttpError("Max retries exceeded for rate limit on batch execute", None)
 
 
 def get_gmail_service() -> Optional[Any]:
@@ -63,19 +58,19 @@ def get_gmail_service() -> Optional[Any]:
     return build(GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, credentials=creds)
 
 
-def setup_audit() -> Tuple[GmailServicePool, Dict[str, Any]]:
-    """Set up service pool and load email cache for audit."""
+def setup_audit() -> Tuple[Any, Dict[str, Any]]:
+    """Set up service and load email cache for audit."""
     if not os.path.exists(DEFAULT_TOKEN_PATH):
         logger.error("Valid token.json not found in data/. Run main.py to authenticate.")
         raise FileNotFoundError("token.json not found")
 
-    service_pool = GmailServicePool(DEFAULT_TOKEN_PATH, pool_size=DEFAULT_POOL_SIZE)
+    service = get_gmail_service()
     email_cache = load_email_cache()
     logger.info(f"Loaded {len(email_cache)} emails from cache")
-    return service_pool, email_cache
+    return service, email_cache
 
 
-def fetch_message_ids(service_pool: GmailServicePool, max_emails: int, query: str = "") -> List[Dict[str, str]]:
+def fetch_message_ids(service, max_emails: int, query: str = "") -> List[Dict[str, str]]:
     """Fetch message IDs from Gmail API with pagination."""
     messages: List[Dict[str, str]] = []
     page_token: Optional[str] = None
@@ -89,12 +84,8 @@ def fetch_message_ids(service_pool: GmailServicePool, max_emails: int, query: st
         if page_token:
             request_params["pageToken"] = page_token
 
-        service = service_pool.get_service()
-        try:
-            results: Dict[str, Any] = service.users().messages().list(**request_params).execute()
-            batch_messages: List[Dict[str, str]] = results.get("messages", [])
-        finally:
-            service_pool.return_service(service)
+        results: Dict[str, Any] = service.users().messages().list(**request_params).execute()
+        batch_messages: List[Dict[str, str]] = results.get("messages", [])
 
         messages.extend(batch_messages)
         logger.debug(f"Fetched batch of {len(batch_messages)} message IDs (total: {len(messages)})")
@@ -111,8 +102,8 @@ def fetch_message_ids(service_pool: GmailServicePool, max_emails: int, query: st
     return messages
 
 
-def fetch_uncached_messages(service_pool: GmailServicePool, email_cache: Dict[str, Any], messages_to_fetch: List[Dict[str, str]]) -> int:
-    """Fetch uncached messages in batches and update cache."""
+def fetch_uncached_messages(service, email_cache: Dict[str, Any], messages_to_fetch: List[Dict[str, str]]) -> int:
+    """Fetch uncached messages in batches sequentially."""
     if not messages_to_fetch:
         return 0
 
@@ -124,45 +115,40 @@ def fetch_uncached_messages(service_pool: GmailServicePool, email_cache: Dict[st
     batches = [messages_to_fetch[i : i + batch_size] for i in range(0, len(messages_to_fetch), batch_size)]
 
     def fetch_batch(batch_messages):
-        service = service_pool.get_service()
-        try:
-            batch = service.new_batch_http_request()
-            results = {}
+        batch = service.new_batch_http_request()
+        results = {}
 
-            def callback(request_id, response, exception):
-                results[request_id] = (response, exception)
+        def callback(request_id, response, exception):
+            results[request_id] = (response, exception)
 
-            for msg in batch_messages:
-                msg_id = msg["id"]
-                request = (
-                    service.users()
-                    .messages()
-                    .get(
-                        userId="me",
-                        id=msg_id,
-                        format="metadata",
-                        metadataHeaders=["From", "Subject", "Date"],
-                    )
+        for msg in batch_messages:
+            msg_id = msg["id"]
+            request = (
+                service.users()
+                .messages()
+                .get(
+                    userId="me",
+                    id=msg_id,
+                    format="metadata",
+                    metadataHeaders=["From", "Subject", "Date"],
                 )
-                batch.add(request, callback=callback, request_id=msg_id)
+            )
+            batch.add(request, callback=callback, request_id=msg_id)
 
-            batch.execute()
-            batch_fetched = 0
-            for msg_id, (resp, exc) in results.items():
-                if exc:
-                    logger.warning(f"Failed to fetch message {msg_id}: {exc}")
-                else:
-                    email_cache[msg_id] = resp
-                    batch_fetched += 1
-                    logger.debug(f"Fetched and cached message {msg_id}")
-            return batch_fetched
-        finally:
-            service_pool.return_service(service)
+        execute_batch_with_retry(batch)
+        batch_fetched = 0
+        for msg_id, (resp, exc) in results.items():
+            if exc:
+                logger.warning(f"Failed to fetch message {msg_id}: {exc}")
+            else:
+                email_cache[msg_id] = resp
+                batch_fetched += 1
+                logger.debug(f"Fetched and cached message {msg_id}")
+        return batch_fetched
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_batch = {executor.submit(fetch_batch, batch): batch for batch in batches}
-        for future in as_completed(future_to_batch):
-            fetched_count += future.result()
+    # Process batches sequentially
+    for batch in batches:
+        fetched_count += fetch_batch(batch)
 
     logger.info(f"Fetched {fetched_count} messages in {len(batches)} batches")
     return fetched_count
@@ -194,6 +180,9 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
 
     for m in messages:
         msg_id = m["id"]
+        if msg_id not in email_cache:
+            logger.warning(f"Skipping message {msg_id} - not in cache (likely failed to fetch due to rate limit)")
+            continue
         cached_msg = email_cache[msg_id]
         headers: List[Dict[str, str]] = cached_msg.get("payload", {}).get("headers", [])
         from_header: str = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")

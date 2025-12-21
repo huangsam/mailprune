@@ -40,12 +40,12 @@ def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:tra
 
     try:
         # Setup
-        service_pool, email_cache = setup_audit()
+        service, email_cache = setup_audit()
 
         logger.info(f"Starting audit of the last {max_emails} emails...")
 
         # Fetch message IDs
-        messages = fetch_message_ids(service_pool, max_emails, query=query)
+        messages = fetch_message_ids(service, max_emails, query=query)
         fetch_time: float = time.time()
         logger.info(f"Fetched {len(messages)} message IDs in {fetch_time - start_time:.2f}s")
 
@@ -54,7 +54,7 @@ def perform_audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:tra
         messages_to_fetch = [m for m in messages if m["id"] not in email_cache]
 
         # Fetch uncached messages
-        fetched_count = fetch_uncached_messages(service_pool, email_cache, messages_to_fetch)
+        fetched_count = fetch_uncached_messages(service, email_cache, messages_to_fetch)
 
         logger.info(f"Processed cache: {len(messages) - len(messages_to_fetch)} cached, {fetched_count} fetched")
 
