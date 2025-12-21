@@ -5,60 +5,13 @@ Utility functions for the mailprune project.
 import json
 import logging
 import os
-from typing import Any, Callable, Dict, Generic, List, TypeVar
+from typing import Any, Dict, List
 
 import pandas as pd
 
 from ..constants import DEFAULT_CACHE_PATH
 
 logger = logging.getLogger(__name__)
-
-T = TypeVar("T")
-
-
-class ChainableFallback(Generic[T]):
-    """A chainable fallback system that tries multiple strategies in order.
-
-    Each strategy is a callable that may raise an exception. If a strategy
-    succeeds (doesn't raise), its result is returned. If it fails, the next
-    strategy is tried. If all strategies fail, a default fallback is used.
-    """
-
-    def __init__(self, default_fallback: Callable[[], T]) -> None:
-        """Initialize with a default fallback strategy.
-
-        Args:
-            default_fallback: Callable that returns the default result if all strategies fail
-        """
-        self.strategies: List[Callable[[], T]] = []
-        self.default_fallback = default_fallback
-
-    def then(self, strategy: Callable[[], T]) -> "ChainableFallback[T]":
-        """Add another strategy to the chain.
-
-        Args:
-            strategy: A callable that may raise an exception
-
-        Returns:
-            Self for method chaining
-        """
-        self.strategies.append(strategy)
-        return self
-
-    def execute(self) -> T:
-        """Execute the chain of strategies.
-
-        Returns:
-            Result from the first successful strategy, or default fallback
-        """
-        for strategy in self.strategies:
-            try:
-                return strategy()
-            except Exception:
-                continue
-
-        # All strategies failed, use default
-        return self.default_fallback()
 
 
 def load_email_cache(cache_path: str = DEFAULT_CACHE_PATH) -> Dict[str, Dict[str, Any]]:

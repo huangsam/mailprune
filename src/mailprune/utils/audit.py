@@ -122,6 +122,8 @@ def fetch_uncached_messages(service, email_cache: Dict[str, Any], messages_to_fe
         def callback(request_id, response, exception):
             results[request_id] = (response, exception)
 
+        # Uses the users.messsages.get API:
+        # https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/get
         for msg in batch_messages:
             msg_id = msg["id"]
             request = (
@@ -130,8 +132,7 @@ def fetch_uncached_messages(service, email_cache: Dict[str, Any], messages_to_fe
                 .get(
                     userId="me",
                     id=msg_id,
-                    format="metadata",
-                    metadataHeaders=["From", "Subject", "Date"],
+                    format="full",  # Returns full message with all headers and body
                 )
             )
             batch.add(request, callback=callback, request_id=msg_id)
@@ -159,7 +160,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
     """Process cached email messages to extract metadata for analysis.
 
     Extracts relevant fields from Gmail API response data including sender,
-    subject, date, labels, and calculates email age. This prepares the data
+    subject, date, labels, email snippet, and calculates email age. This prepares the data
     for aggregation and scoring.
 
     Args:
@@ -173,6 +174,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
             - subject: Email subject line
             - date: Original date string
             - age_days: Days since email was sent (None if unparseable)
+            - snippet: Email content preview (first ~200 characters)
             - unread/starred/important: Boolean label flags
             - social/updates/promotions: Boolean category flags
     """
@@ -189,6 +191,9 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
         from_header: str = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
         subject: str = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
         date_str: str = next((h["value"] for h in headers if h["name"] == "Date"), "Unknown")
+
+        # Extract email snippet (preview of body content)
+        snippet: str = cached_msg.get("snippet", "")
 
         # Parse date
         age_days: Optional[float] = None
@@ -221,6 +226,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
             "subject": subject,
             "date": date_str,
             "age_days": age_days,
+            "snippet": snippet,  # Add email content snippet
         }
         data.append(row)
 
@@ -316,3 +322,15 @@ def get_sender_subjects_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str
         subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
         sender_subjects[sender].append(subject)
     return dict(sender_subjects)
+
+
+def get_sender_snippets_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str, List[str]]:
+    """Extract sender-snippet mapping from email cache for content analysis."""
+    sender_snippets = defaultdict(list)
+    for email in cache.values():
+        headers = email.get("payload", {}).get("headers", [])
+        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
+        snippet = email.get("snippet", "")
+        if snippet:  # Only include emails with content snippets
+            sender_snippets[sender].append(snippet)
+    return dict(sender_snippets)

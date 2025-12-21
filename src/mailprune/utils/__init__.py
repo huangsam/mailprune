@@ -43,7 +43,6 @@ from .audit import (
 )
 from .helpers import (
     EMAIL_CATEGORIES,
-    ChainableFallback,
     calculate_percentage,
     format_sender_list,
     get_category_distribution,
@@ -84,7 +83,6 @@ __all__ = [
     # From audit
     "get_sender_subjects_from_cache",
     # From helpers
-    "ChainableFallback",
     "EMAIL_CATEGORIES",
     "calculate_percentage",
     "format_sender_list",

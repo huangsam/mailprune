@@ -3,6 +3,7 @@ Email analysis utilities for mailprune.
 Provides functions to analyze email audit data and generate insights.
 """
 
+import logging
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -10,7 +11,34 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 from ..constants import DEFAULT_CSV_PATH, ENGAGEMENT_HIGH_THRESHOLD, ENGAGEMENT_LOW_THRESHOLD, ENGAGEMENT_MEDIUM_THRESHOLD
-from ..utils.helpers import ChainableFallback
+from ..utils.audit import get_sender_snippets_from_cache, get_sender_subjects_from_cache
+from ..utils.helpers import load_email_cache
+
+logger = logging.getLogger(__name__)
+
+_SPACY_MODEL = None
+
+
+def get_spacy_model():
+    """Load and cache the spaCy model."""
+    global _SPACY_MODEL
+    if _SPACY_MODEL is not None:
+        return _SPACY_MODEL
+
+    import spacy
+
+    try:
+        _SPACY_MODEL = spacy.load("en_core_web_sm")
+    except OSError:
+        logger.info("spaCy model 'en_core_web_sm' not found. Attempting to download...")
+        try:
+            spacy.cli.download("en_core_web_sm")
+            _SPACY_MODEL = spacy.load("en_core_web_sm")
+            logger.info("Successfully downloaded and loaded spaCy model.")
+        except Exception as e:
+            logger.warning(f"Failed to download spaCy model: {e}")
+            return None
+    return _SPACY_MODEL
 
 
 def load_audit_data(csv_path: str = DEFAULT_CSV_PATH) -> pd.DataFrame:
@@ -337,73 +365,61 @@ def preprocess_text(text: str) -> str:
 
 
 def extract_keywords_nlp(text: str, use_nlp: bool = True) -> List[str]:
-    """Extract meaningful keywords using NLP techniques with automatic fallbacks."""
+    """Extract meaningful keywords using simple text processing."""
     if not text:
         return []
 
-    def spacy_strategy() -> List[str]:
-        """Try spaCy for high-quality NLP processing."""
-        import spacy
+    # Simple regex-based keyword extraction
+    logger.debug("Using simple regex keyword extraction.")
+    words = preprocess_text(text).split()
+    # Filter out common words and short words
+    common_words = {"the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "an", "a"}
+    return [word for word in words if len(word) > 2 and word not in common_words]
 
-        nlp = spacy.load("en_core_web_sm")
-        doc = nlp(text)
-        # Extract nouns, adjectives, and proper nouns
-        return [token.lemma_ for token in doc if token.pos_ in ["NOUN", "ADJ", "PROPN"] and not token.is_stop and len(token.lemma_) > 2]
 
-    def nltk_strategy() -> List[str]:
-        """Try NLTK for good-quality NLP processing."""
-        import nltk
-        from nltk.corpus import stopwords
-        from nltk.stem import WordNetLemmatizer
-        from nltk.tokenize import word_tokenize
+def extract_entities_nlp(text: str, use_nlp: bool = True) -> Dict[str, List[str]]:
+    """
+    Extract named entities (ORG, PERSON, GPE, MONEY, DATE, etc.) from text using spaCy.
+    Returns a dictionary of entity types and their values.
+    """
+    if not text or not use_nlp:
+        return {}
 
-        # Ensure required NLTK data is available
-        for data_name in ["punkt", "stopwords", "wordnet"]:
-            try:
-                nltk.data.find(f"tokenizers/{data_name}" if data_name == "punkt" else f"corpora/{data_name}")
-            except LookupError:
-                try:
-                    nltk.download(data_name, quiet=True)
-                except Exception:
-                    pass
+    entities: Dict[str, List[str]] = {}
 
-        tokens = word_tokenize(text)
-        stop_words = set(stopwords.words("english"))
-        lemmatizer = WordNetLemmatizer()
+    try:
+        nlp = get_spacy_model()
+        if nlp:
+            doc = nlp(text)
+            # Filter for interesting entity types
+            target_labels = ["ORG", "PERSON", "GPE", "MONEY", "DATE", "PRODUCT", "EVENT"]
 
-        return [lemmatizer.lemmatize(token) for token in tokens if token.isalpha() and token not in stop_words and len(token) > 2]
+            for ent in doc.ents:
+                if ent.label_ in target_labels:
+                    if ent.label_ not in entities:
+                        entities[ent.label_] = []
+                    # Avoid duplicates
+                    if ent.text not in entities[ent.label_]:
+                        entities[ent.label_].append(ent.text)
+    except Exception as e:
+        logger.debug(f"Entity extraction failed: {e}")
 
-    def simple_fallback() -> List[str]:
-        """Simple regex-based keyword extraction as final fallback."""
-        words = preprocess_text(text).split()
-        # Filter out common words and short words
-        common_words = {"the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "an", "a"}
-        return [word for word in words if len(word) > 2 and word not in common_words]
-
-    if use_nlp:
-        # Chain the strategies: spaCy -> NLTK -> simple fallback
-        chain = ChainableFallback(simple_fallback)
-        chain.then(spacy_strategy).then(nltk_strategy)
-        return chain.execute()
-
-    # Skip NLP and use simple extraction directly
-    return simple_fallback()
+    return entities
 
 
 def analyze_title_patterns_core(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict:
-    """Core title pattern analysis logic without CLI output."""
+    """Core content pattern analysis using email snippets for richer NLP analysis."""
     from collections import Counter
-
-    from ..utils.audit import get_sender_subjects_from_cache
-    from ..utils.helpers import load_email_cache
 
     results = {}
 
-    # Load email cache and get sender subjects
+    # Load email cache and get sender snippets
     try:
         cache = load_email_cache(cache_path)
+        sender_snippets = get_sender_snippets_from_cache(cache)
         sender_subjects = get_sender_subjects_from_cache(cache)
     except Exception:
+        sender_snippets = {}
         sender_subjects = {}
 
     # Sort by specified metric and get top senders
@@ -415,23 +431,53 @@ def analyze_title_patterns_core(cache_path: str, audit_data: List[Dict], top_n: 
 
     for sender_data in top_senders:
         sender = sender_data.get("from", "Unknown")  # CSV uses 'from' column
-        subjects = sender_subjects.get(sender, [])
+        snippets = sender_snippets.get(sender, [])
 
-        if not subjects:
+        if not snippets:
             continue
 
-        # Extract keywords from all subjects
+        # Extract keywords and entities from all email snippets
         all_keywords = []
-        for subject in subjects:
-            keywords = extract_keywords_nlp(subject, use_nlp)
+        all_entities: Dict[str, List[str]] = {}
+
+        for snippet in snippets:
+            # Keywords
+            keywords = extract_keywords_nlp(snippet, use_nlp)
             all_keywords.extend(keywords)
 
-        # Count keyword frequencies
+            # Entities
+            if use_nlp:
+                ents = extract_entities_nlp(snippet, use_nlp)
+                for label, values in ents.items():
+                    if label not in all_entities:
+                        all_entities[label] = []
+                    all_entities[label].extend(values)
+
+        # Count keyword frequencies across all content
         keyword_counts = Counter(all_keywords)
 
-        # Get top keywords
+        # Get top keywords from content analysis
         top_keywords = keyword_counts.most_common(10)
 
-        results[sender] = {"sample_subject": subjects[0] if subjects else "", "top_keywords": top_keywords, "nlp_used": use_nlp}
+        # Process entities (count frequencies per type)
+        top_entities = {}
+        for label, values in all_entities.items():
+            entity_counts = Counter(values)
+            top_entities[label] = entity_counts.most_common(5)
+
+        # Get a sample subject for display (from audit data or cache)
+        sample_subject = sender_data.get("sample_subject", "")
+        if not sample_subject:
+            subjects = sender_subjects.get(sender, [])
+            if subjects:
+                sample_subject = subjects[0]
+
+        results[sender] = {
+            "sample_subject": sample_subject,
+            "email_count": len(snippets),
+            "top_keywords": top_keywords,
+            "top_entities": top_entities,
+            "nlp_used": use_nlp,
+        }
 
     return results
