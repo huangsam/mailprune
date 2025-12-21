@@ -41,9 +41,6 @@ uv run mailprune audit --max-emails 2000
 # Generate comprehensive email audit and cleanup report
 uv run mailprune report
 
-# Generate brief email audit summary
-uv run mailprune report --brief
-
 # Analyze sender engagement patterns and tiers
 uv run mailprune engagement
 
