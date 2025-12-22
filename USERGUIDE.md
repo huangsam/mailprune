@@ -33,7 +33,7 @@ gh repo clone huangsam/mailprune
 cd mailprune
 
 # Install dependencies (this may take a few minutes)
-uv sync --editable
+uv sync
 ```
 
 ### Step 2: Set Up Gmail API Access
@@ -86,7 +86,7 @@ For the impatient, here's the complete workflow:
 ```bash
 # 1. Install & Setup (5 min)
 gh repo clone huangsam/mailprune && cd mailprune
-uv sync --editable
+uv sync
 # Set up Gmail API credentials in data/credentials.json
 
 # 2. Run Full Assessment (25 min)
