@@ -2,6 +2,8 @@
 
 Smart email cleanup tool that audits your Gmail, spots noise makers, and suggests targeted fixes.
 
+**Motivation:** Between huge sprints, my inbox inevitably ballooned to **900+** emails where I lost track of what mattered. Mailprune helped me—in a single day—drop that to under **100** and cut subscriptions from **~140** to **~100**.
+
 ## ✨ Features
 
 - **Smart Auditing**: Analyzes inbox volume, open rates, and patterns
