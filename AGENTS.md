@@ -22,14 +22,11 @@ mailprune/
 
 ## Installation & Setup
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd mailprune
+See [USERGUIDE.md](USERGUIDE.md) for installation instructions. For agent-specific setup:
 
-# Install dependencies
-uv sync --editable
-```
+- Ensure Python 3.12+ and uv are available in your environment
+- Install in editable mode for development: `uv sync --editable`
+- For testing, additional dependencies are included in the sync
 
 ## Testing
 
