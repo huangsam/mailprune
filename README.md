@@ -1,5 +1,6 @@
 # Mailprune
 
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/huangsam/mailprune/ci.yml)](https://github.com/huangsam/mailprune/actions)
 [![License](https://img.shields.io/github/license/huangsam/mailprune)](https://github.com/huangsam/mailprune/blob/main/LICENSE)
 
 Smart email cleanup tool that audits your Gmail, spots noise makers, and suggests targeted fixes.
