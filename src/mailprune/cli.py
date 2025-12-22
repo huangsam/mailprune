@@ -10,8 +10,8 @@ import click
 
 from mailprune.commands import (
     analyze_clusters,
-    analyze_patterns,  # Updated from analyze_title_patterns_enhanced
     analyze_engagement,
+    analyze_patterns,  # Updated from analyze_title_patterns_enhanced
     generate_report,
     perform_audit,
 )
