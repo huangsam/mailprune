@@ -1,5 +1,7 @@
 # Mailprune
 
+[![License](https://img.shields.io/github/license/huangsam/mailprune)](https://github.com/huangsam/mailprune/blob/main/LICENSE)
+
 Smart email cleanup tool that audits your Gmail, spots noise makers, and suggests targeted fixes.
 
 **Motivation:** Between huge sprints, my inbox inevitably ballooned to **900+** emails where I lost track of what mattered. Mailprune helped me—in a single day—drop that to under **100** and cut subscriptions from **~140** to **~100**.
