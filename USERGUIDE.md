@@ -60,13 +60,19 @@ Mailprune uses Google's Gmail API to analyze your emails securely. This requires
     mv ~/Downloads/credentials.json data/
     ```
 
-4. **First Run Authorization**:
+4. **Authenticate with Gmail**:
     ```bash
     # This will open a browser for Google authentication
-    uv run mailprune audit --max-emails 100
+    uv run mailprune auth
     ```
     - Grant permissions when prompted
     - A `token.json` file will be created automatically
+
+5. **Run Initial Audit**:
+    ```bash
+    # Now run your first audit to collect email data
+    uv run mailprune audit --max-emails 100
+    ```
 
 ### Step 3: Verify Setup
 ```bash
@@ -75,7 +81,7 @@ uv run mailprune --help
 ```
 
 **Troubleshooting:**
-- If you get authentication errors, delete `data/token.json` and re-run the audit command
+- If you get authentication errors, delete `data/token.json` and re-run `uv run mailprune auth`
 - Ensure `credentials.json` is in the `data/` directory
 - Check that your Google account has Gmail enabled
 
@@ -89,7 +95,8 @@ gh repo clone huangsam/mailprune && cd mailprune
 uv sync
 # Set up Gmail API credentials in data/credentials.json
 
-# 2. Run Full Assessment (25 min)
+# 2. Authenticate & Run Full Assessment (25 min)
+uv run mailprune auth
 uv run mailprune audit --max-emails 2000
 uv run mailprune report
 uv run mailprune engagement

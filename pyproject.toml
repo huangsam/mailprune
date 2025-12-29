@@ -36,6 +36,12 @@ ignore_missing_imports = true
 follow_imports = "silent"
 warn_unused_ignores = true
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    # Ignore httplib2 deprecation warnings from third-party library
+    "ignore::DeprecationWarning:httplib2.*",
+]
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"

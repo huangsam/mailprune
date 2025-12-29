@@ -5,8 +5,10 @@ This module provides the main CLI entry point for the Mailprune application.
 """
 
 import logging
+import os
 
 import click
+from google_auth_oauthlib.flow import InstalledAppFlow
 
 from mailprune.commands import (
     analyze_clusters,
@@ -15,7 +17,13 @@ from mailprune.commands import (
     generate_report,
     perform_audit,
 )
-from mailprune.constants import DEFAULT_CACHE_PATH, DEFAULT_MAX_EMAILS
+from mailprune.constants import (
+    DEFAULT_CACHE_PATH,
+    DEFAULT_CREDENTIALS_PATH,
+    DEFAULT_MAX_EMAILS,
+    DEFAULT_TOKEN_PATH,
+    GMAIL_API_SCOPES,
+)
 from mailprune.utils import (
     analyze_sender_patterns,
     load_audit_data,
@@ -43,6 +51,42 @@ def cli(verbose: bool):
         logging.getLogger().setLevel(logging.DEBUG)
     else:
         logging.getLogger().setLevel(logging.INFO)
+
+
+@cli.command()
+def auth() -> None:
+    """
+    Authenticate with Gmail API.
+
+    Opens a browser to authorize the application and generates token.json
+    for subsequent API access. Run this command first if you don't have a valid token.
+    """
+    if not os.path.exists(DEFAULT_CREDENTIALS_PATH):
+        raise click.ClickException(
+            f"❌ {DEFAULT_CREDENTIALS_PATH} not found!\n"
+            "Please download your OAuth 2.0 credentials from Google Cloud Console\n"
+            f"and save it as {DEFAULT_CREDENTIALS_PATH}"
+        )
+
+    if os.path.exists(DEFAULT_TOKEN_PATH):
+        click.confirm(f"⚠️  {DEFAULT_TOKEN_PATH} already exists. Overwrite?", abort=True)
+
+    click.echo("🔐 Starting authentication flow...")
+    click.echo("Your browser will open for Google authorization.")
+
+    try:
+        flow = InstalledAppFlow.from_client_secrets_file(DEFAULT_CREDENTIALS_PATH, GMAIL_API_SCOPES)
+        creds = flow.run_local_server(port=0)
+
+        # Save the credentials for future use
+        with open(DEFAULT_TOKEN_PATH, "w") as token:
+            token.write(creds.to_json())
+
+        click.echo("✅ Authentication successful!")
+        click.echo(f"Token saved to {DEFAULT_TOKEN_PATH}")
+        click.echo("\nYou can now run: mailprune audit")
+    except Exception as e:
+        raise click.ClickException(f"Authentication failed: {e}")
 
 
 @cli.command()
