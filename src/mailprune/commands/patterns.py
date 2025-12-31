@@ -3,14 +3,14 @@ Content patterns command with NLP processing for Mailprune.
 Analyzes email content snippets for comprehensive pattern recognition.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import click
 
 from mailprune.utils.analysis import analyze_title_patterns_core
 
 
-def analyze_patterns(cache_path: str, audit_data: List[Dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> Dict[str, Dict[str, Any]]:
+def analyze_patterns(cache_path: str, audit_data: list[dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> dict[str, dict[str, Any]]:
     """Analyze content patterns for top senders using email snippets.
 
     This function performs comprehensive content analysis on email data to identify

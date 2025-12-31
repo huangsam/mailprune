@@ -3,9 +3,9 @@ import os
 import random
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 import pandas as pd
 from google.auth.transport.requests import Request
@@ -45,9 +45,9 @@ def execute_batch_with_retry(batch, max_retries=5) -> None:
     raise HttpError("Max retries exceeded for rate limit on batch execute", None)
 
 
-def get_gmail_service() -> Optional[Any]:
+def get_gmail_service() -> Any | None:
     """Authenticate and return a Gmail API service instance."""
-    creds: Optional[Credentials] = None
+    creds: Credentials | None = None
     if os.path.exists(DEFAULT_TOKEN_PATH):
         creds = Credentials.from_authorized_user_file(DEFAULT_TOKEN_PATH, GMAIL_API_SCOPES)
     if not creds or not creds.valid:
@@ -59,7 +59,7 @@ def get_gmail_service() -> Optional[Any]:
     return build(GMAIL_API_SERVICE_NAME, GMAIL_API_VERSION, credentials=creds)
 
 
-def setup_audit(cache_path: str = DEFAULT_CACHE_PATH) -> Tuple[Any, Dict[str, Any]]:
+def setup_audit(cache_path: str = DEFAULT_CACHE_PATH) -> tuple[Any, dict[str, Any]]:
     """Set up service and load email cache for audit."""
     if not os.path.exists(DEFAULT_TOKEN_PATH):
         logger.error("Valid token.json not found in data/. Run main.py to authenticate.")
@@ -71,10 +71,10 @@ def setup_audit(cache_path: str = DEFAULT_CACHE_PATH) -> Tuple[Any, Dict[str, An
     return service, email_cache
 
 
-def fetch_message_ids(service, max_emails: int, query: str = "") -> List[Dict[str, str]]:
+def fetch_message_ids(service, max_emails: int, query: str = "") -> list[dict[str, str]]:
     """Fetch message IDs from Gmail API with pagination."""
-    messages: List[Dict[str, str]] = []
-    page_token: Optional[str] = None
+    messages: list[dict[str, str]] = []
+    page_token: str | None = None
     remaining_emails = max_emails
 
     while len(messages) < max_emails:
@@ -85,8 +85,8 @@ def fetch_message_ids(service, max_emails: int, query: str = "") -> List[Dict[st
         if page_token:
             request_params["pageToken"] = page_token
 
-        results: Dict[str, Any] = service.users().messages().list(**request_params).execute()
-        batch_messages: List[Dict[str, str]] = results.get("messages", [])
+        results: dict[str, Any] = service.users().messages().list(**request_params).execute()
+        batch_messages: list[dict[str, str]] = results.get("messages", [])
 
         messages.extend(batch_messages)
         logger.debug(f"Fetched batch of {len(batch_messages)} message IDs (total: {len(messages)})")
@@ -103,7 +103,7 @@ def fetch_message_ids(service, max_emails: int, query: str = "") -> List[Dict[st
     return messages
 
 
-def fetch_uncached_messages(service, email_cache: Dict[str, Any], messages_to_fetch: List[Dict[str, str]]) -> int:
+def fetch_uncached_messages(service, email_cache: dict[str, Any], messages_to_fetch: list[dict[str, str]]) -> int:
     """Fetch uncached messages in batches sequentially."""
     if not messages_to_fetch:
         return 0
@@ -156,7 +156,7 @@ def fetch_uncached_messages(service, email_cache: Dict[str, Any], messages_to_fe
     return fetched_count
 
 
-def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+def process_messages(email_cache: dict[str, Any], messages: list[dict[str, str]]) -> list[dict[str, Any]]:
     """Process cached email messages to extract metadata for analysis.
 
     Extracts relevant fields from Gmail API response data including sender,
@@ -178,8 +178,8 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
             - unread/starred/important: Boolean label flags
             - social/updates/promotions: Boolean category flags
     """
-    data: List[Dict[str, Any]] = []
-    now: datetime = datetime.now(timezone.utc)
+    data: list[dict[str, Any]] = []
+    now: datetime = datetime.now(UTC)
 
     for m in messages:
         msg_id = m["id"]
@@ -187,7 +187,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
             logger.warning(f"Skipping message {msg_id} - not in cache (likely failed to fetch due to rate limit)")
             continue
         cached_msg = email_cache[msg_id]
-        headers: List[Dict[str, str]] = cached_msg.get("payload", {}).get("headers", [])
+        headers: list[dict[str, str]] = cached_msg.get("payload", {}).get("headers", [])
         from_header: str = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
         subject: str = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
         date_str: str = next((h["value"] for h in headers if h["name"] == "Date"), "Unknown")
@@ -196,7 +196,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
         snippet: str = cached_msg.get("snippet", "")
 
         # Parse date
-        age_days: Optional[float] = None
+        age_days: float | None = None
         try:
             date_parsed: datetime = parsedate_to_datetime(date_str)
             age_days = (now - date_parsed).days
@@ -204,7 +204,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
             pass  # Skip invalid dates
 
         # Check labels
-        labels: List[str] = cached_msg.get("labelIds", [])
+        labels: list[str] = cached_msg.get("labelIds", [])
         is_unread: bool = GmailLabels.UNREAD in labels
         is_starred: bool = GmailLabels.STARRED in labels
         is_important: bool = GmailLabels.IMPORTANT in labels
@@ -214,7 +214,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
 
         logger.debug(f"Email ID: {msg_id}, From: {from_header}, Subject: {subject}, Date: {date_str}")
 
-        row: Dict[str, Any] = {
+        row: dict[str, Any] = {
             "id": msg_id,
             "unread": is_unread,
             "starred": is_starred,
@@ -234,7 +234,7 @@ def process_messages(email_cache: Dict[str, Any], messages: List[Dict[str, str]]
     return data
 
 
-def prune_cache(email_cache: Dict[str, Any], current_email_ids: Set[str]) -> int:
+def prune_cache(email_cache: dict[str, Any], current_email_ids: set[str]) -> int:
     """Prune emails from cache that are no longer present."""
     pruned_count = 0
     for msg_id in list(email_cache.keys()):
@@ -313,7 +313,7 @@ def save_report(audit_summary: pd.DataFrame) -> None:
     logger.info(f"Audit complete! Report saved to {output_path}")
 
 
-def get_sender_subjects_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str, List[str]]:
+def get_sender_subjects_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
     """Extract sender-subject mapping from email cache."""
     sender_subjects = defaultdict(list)
     for email in cache.values():
@@ -324,7 +324,7 @@ def get_sender_subjects_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str
     return dict(sender_subjects)
 
 
-def get_sender_snippets_from_cache(cache: Dict[str, Dict[str, Any]]) -> Dict[str, List[str]]:
+def get_sender_snippets_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
     """Extract sender-snippet mapping from email cache for content analysis."""
     sender_snippets = defaultdict(list)
     for email in cache.values():

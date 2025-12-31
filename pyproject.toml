@@ -28,8 +28,8 @@ mailprune = ["data/*"]
 line-length = 160
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "C", "Q"]
-extend-ignore = ["E203", "C901"]
+select = ["E", "F", "UP", "B", "I"]
+extend-ignore = ["E203"]
 
 [tool.mypy]
 ignore_missing_imports = true

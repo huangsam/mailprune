@@ -86,7 +86,7 @@ def auth() -> None:
         click.echo(f"Token saved to {DEFAULT_TOKEN_PATH}")
         click.echo("\nYou can now run: mailprune audit")
     except Exception as e:
-        raise click.ClickException(f"Authentication failed: {e}")
+        raise click.ClickException(f"Authentication failed: {e}") from e
 
 
 @cli.command()

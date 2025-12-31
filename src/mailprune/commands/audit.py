@@ -4,7 +4,6 @@ Audit command implementation for Mailprune.
 
 import logging
 import time
-from typing import Optional
 
 import pandas as pd
 
@@ -22,7 +21,7 @@ from mailprune.utils.helpers import save_email_cache
 logger = logging.getLogger(__name__)
 
 
-def perform_audit(max_emails: int, query: str, cache_path: str) -> Optional[pd.DataFrame]:
+def perform_audit(max_emails: int, query: str, cache_path: str) -> pd.DataFrame | None:
     """Perform Phase 1 Email Audit.
 
     The steps are as follows:

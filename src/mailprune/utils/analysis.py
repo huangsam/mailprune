@@ -4,7 +4,7 @@ Provides functions to analyze email audit data and generate insights.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 _SPACY_MODEL = None
 
 
-def get_spacy_model() -> Optional[Any]:
+def get_spacy_model() -> Any | None:
     """Load and cache the spaCy model."""
     global _SPACY_MODEL
     if _SPACY_MODEL is not None:
@@ -55,7 +55,7 @@ def get_top_noise_makers(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     return df.nlargest(n, "ignorance_score")
 
 
-def get_engagement_tiers(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+def get_engagement_tiers(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """Get engagement tier dataframes."""
     return {
         "high": df[df["open_rate"] >= ENGAGEMENT_HIGH_THRESHOLD],
@@ -65,7 +65,7 @@ def get_engagement_tiers(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     }
 
 
-def get_top_senders_by_volume(sender_subjects: Dict[str, List[str]], top_n: int) -> List[Tuple[str, int]]:
+def get_top_senders_by_volume(sender_subjects: dict[str, list[str]], top_n: int) -> list[tuple[str, int]]:
     """Get top senders ranked by email volume.
 
     Args:
@@ -78,7 +78,7 @@ def get_top_senders_by_volume(sender_subjects: Dict[str, List[str]], top_n: int)
     return [(sender, len(subjects)) for sender, subjects in sorted(sender_subjects.items(), key=lambda x: len(x[1]), reverse=True)[:top_n]]
 
 
-def calculate_overall_metrics(df: pd.DataFrame) -> Dict[str, float]:
+def calculate_overall_metrics(df: pd.DataFrame) -> dict[str, float]:
     """Calculate overall email metrics from audit data.
 
     Computes key statistics including total emails, unread percentage,
@@ -114,7 +114,7 @@ def calculate_overall_metrics(df: pd.DataFrame) -> Dict[str, float]:
     }
 
 
-def analyze_sender_patterns(df: pd.DataFrame, sender_name: str) -> Optional[Dict]:
+def analyze_sender_patterns(df: pd.DataFrame, sender_name: str) -> dict | None:
     """Analyze a specific sender's email patterns."""
     sender_data = df[df["from"].str.contains(sender_name, case=False, na=False)]
     if sender_data.empty:
@@ -130,7 +130,7 @@ def analyze_sender_patterns(df: pd.DataFrame, sender_name: str) -> Optional[Dict
     }
 
 
-def compare_metrics(before_metrics: Dict, after_metrics: Dict) -> Dict:
+def compare_metrics(before_metrics: dict, after_metrics: dict) -> dict:
     """Compare email metrics before and after cleanup actions.
 
     Calculates improvements in key metrics to quantify the effectiveness
@@ -155,7 +155,7 @@ def compare_metrics(before_metrics: Dict, after_metrics: Dict) -> Dict:
     }
 
 
-def generate_cleanup_report(df: pd.DataFrame, baseline_metrics: Optional[Dict] = None) -> str:
+def generate_cleanup_report(df: pd.DataFrame, baseline_metrics: dict | None = None) -> str:
     """Generate a comprehensive cleanup report."""
     current_metrics = calculate_overall_metrics(df)
 
@@ -201,7 +201,7 @@ def generate_cleanup_report(df: pd.DataFrame, baseline_metrics: Optional[Dict] =
     return "\n".join(report)
 
 
-def analyze_sender_email_patterns(sender_emails: List[str]) -> Tuple[List[str], List[str], List[str]]:
+def analyze_sender_email_patterns(sender_emails: list[str]) -> tuple[list[str], list[str], list[str]]:
     """Analyze email subject patterns for a sender (valuable vs promotional)."""
     valuable_keywords = [
         "credit score",
@@ -271,7 +271,7 @@ def analyze_sender_email_patterns(sender_emails: List[str]) -> Tuple[List[str], 
     return valuable_emails, promotional_emails, uncategorized
 
 
-def filter_common_words(words: List[str]) -> List[str]:
+def filter_common_words(words: list[str]) -> list[str]:
     """Filter out common English words and short words from subject analysis.
 
     Removes common prepositions, articles, and conjunctions that don't provide
@@ -321,7 +321,7 @@ def filter_common_words(words: List[str]) -> List[str]:
     return [word.lower() for word in words if len(word) > 3 and word.lower() not in common_words]
 
 
-def cluster_senders_unsupervised(df: pd.DataFrame, n_clusters: int = 5) -> Dict[str, int]:
+def cluster_senders_unsupervised(df: pd.DataFrame, n_clusters: int = 5) -> dict[str, int]:
     """
     Perform unsupervised clustering on senders using K-Means.
     Features: total_volume, unread_count, open_rate, ignorance_score.
@@ -364,7 +364,7 @@ def preprocess_text(text: str) -> str:
     return text
 
 
-def extract_keywords_nlp(text: str, use_nlp: bool = True) -> List[str]:
+def extract_keywords_nlp(text: str, use_nlp: bool = True) -> list[str]:
     """Extract meaningful keywords using simple text processing."""
     if not text:
         return []
@@ -377,7 +377,7 @@ def extract_keywords_nlp(text: str, use_nlp: bool = True) -> List[str]:
     return [word for word in words if len(word) > 2 and word not in common_words]
 
 
-def extract_entities_nlp(text: str, use_nlp: bool = True) -> Dict[str, List[str]]:
+def extract_entities_nlp(text: str, use_nlp: bool = True) -> dict[str, list[str]]:
     """
     Extract named entities (ORG, PERSON, GPE, MONEY, DATE, etc.) from text using spaCy.
     Returns a dictionary of entity types and their values.
@@ -385,7 +385,7 @@ def extract_entities_nlp(text: str, use_nlp: bool = True) -> Dict[str, List[str]
     if not text or not use_nlp:
         return {}
 
-    entities: Dict[str, List[str]] = {}
+    entities: dict[str, list[str]] = {}
 
     try:
         nlp = get_spacy_model()
@@ -407,7 +407,7 @@ def extract_entities_nlp(text: str, use_nlp: bool = True) -> Dict[str, List[str]
     return entities
 
 
-def infer_intent_nlp(text: str, use_nlp: bool = True, top_n: int = 1) -> Union[str, List[Tuple[str, int]]]:
+def infer_intent_nlp(text: str, use_nlp: bool = True, top_n: int = 1) -> str | list[tuple[str, int]]:
     """
     Infer email intent using NLP analysis of content.
     Classifies emails into categories: promotional, transactional, informational, social, or unknown.
@@ -517,11 +517,11 @@ def infer_intent_nlp(text: str, use_nlp: bool = True, top_n: int = 1) -> Union[s
 
 def analyze_title_patterns_core(
     cache_path: str,
-    audit_data: List[Dict],
+    audit_data: list[dict],
     top_n: int = 5,
     by: str = "volume",
     use_nlp: bool = True,
-) -> Dict[str, Dict[str, Any]]:
+) -> dict[str, dict[str, Any]]:
     """Core content pattern analysis using email snippets for richer NLP analysis."""
     from collections import Counter
 
@@ -552,7 +552,7 @@ def analyze_title_patterns_core(
 
         # Extract keywords and entities from all email snippets
         all_keywords = []
-        all_entities: Dict[str, List[str]] = {}
+        all_entities: dict[str, list[str]] = {}
 
         for snippet in snippets:
             # Keywords
