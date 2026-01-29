@@ -52,6 +52,8 @@ def load_audit_data(csv_path: str = DEFAULT_CSV_PATH) -> pd.DataFrame:
 
 def get_top_noise_makers(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     """Get the top N noise makers by ignorance score."""
+    if df.empty:
+        return df  # Return empty DataFrame with same structure
     return df.nlargest(n, "ignorance_score")
 
 
@@ -99,8 +101,17 @@ def calculate_overall_metrics(df: pd.DataFrame) -> dict[str, float]:
             - senders_never_opened: Count of senders with 0% open rate
             - top_ignorance_score: Highest ignorance score
     """
+    if df.empty:
+        return {
+            "total_emails": 0,
+            "unread_percentage": 0.0,
+            "average_open_rate": 0.0,
+            "senders_never_opened": 0,
+            "top_ignorance_score": 0,
+        }
+
     total_emails = df.total_volume.sum()
-    unread_pct = df.unread_count.sum() / total_emails * 100
+    unread_pct = df.unread_count.sum() / total_emails * 100 if total_emails > 0 else 0.0
     avg_open_rate = df.open_rate.mean()
     never_opened = len(df[df.open_rate == 0])
     top_score = df.ignorance_score.max()
@@ -184,18 +195,22 @@ def generate_cleanup_report(df: pd.DataFrame, baseline_metrics: dict | None = No
     report.append("")
 
     report.append("=== 🎯 CLEANUP RECOMMENDATIONS ===")
-    never_opened = df[df.open_rate == 0].nlargest(5, "total_volume")
-    if not never_opened.empty:
-        report.append("🗑️  Consider unsubscribing from these (0% open rate):")
-        for _, row in never_opened.iterrows():
-            report.append(f"   • {row['from']} ({int(row['total_volume'])} emails)")
-        report.append("")
+    if not df.empty:
+        never_opened = df[df.open_rate == 0].nlargest(5, "total_volume")
+        if not never_opened.empty:
+            report.append("🗑️  Consider unsubscribing from these (0% open rate):")
+            for _, row in never_opened.iterrows():
+                report.append(f"   • {row['from']} ({int(row['total_volume'])} emails)")
+            report.append("")
 
-    high_volume = df[df.total_volume >= 20].nlargest(5, "ignorance_score")
-    if not high_volume.empty:
-        report.append("🎛️  Review these high-volume senders:")
-        for _, row in high_volume.iterrows():
-            report.append(f"   • {row['from']} ({int(row['total_volume'])} emails, {row['open_rate']:.1f}% open)")
+        high_volume = df[df.total_volume >= 20].nlargest(5, "ignorance_score")
+        if not high_volume.empty:
+            report.append("🎛️  Review these high-volume senders:")
+            for _, row in high_volume.iterrows():
+                report.append(f"   • {row['from']} ({int(row['total_volume'])} emails, {row['open_rate']:.1f}% open)")
+            report.append("")
+    else:
+        report.append("📝 No sender data available for recommendations.")
         report.append("")
 
     return "\n".join(report)

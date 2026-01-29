@@ -193,3 +193,59 @@ class TestAnalysisFunctions:
         result = analyze_sender_email_patterns([])
         assert isinstance(result, tuple)
         assert len(result) == 3  # Should return three lists
+
+
+class TestEdgeCases:
+    """Test edge cases for existing functions."""
+
+    def test_infer_intent_nlp_mixed_content(self):
+        """Test intent inference with mixed promotional/transactional content."""
+        mixed_text = "Buy now and save 50%! Your order has been confirmed. Payment processed successfully."
+        intent = infer_intent_nlp(mixed_text, use_nlp=True)
+        # Should classify as one of the dominant intents
+        assert intent in ["promotional", "transactional", "informational", "unknown"]
+
+        # Test with top_n to see multiple intents
+        top_intents = infer_intent_nlp(mixed_text, use_nlp=True, top_n=3)
+        assert isinstance(top_intents, list)
+        assert len(top_intents) <= 3
+        assert all(isinstance(intent_score, tuple) and len(intent_score) == 2 for intent_score in top_intents)
+
+    def test_cluster_senders_unsupervised_single_cluster(self, sample_audit_data):
+        """Test clustering with n_clusters=1."""
+        clusters = cluster_senders_unsupervised(sample_audit_data, n_clusters=1)
+        assert len(clusters) == len(sample_audit_data)
+        # All senders should be in cluster 0
+        assert all(cluster_id == 0 for cluster_id in clusters.values())
+
+    def test_generate_cleanup_report_empty_data(self):
+        """Test report generation with empty DataFrame."""
+        # Create DataFrame with expected columns but no rows
+        empty_df = pd.DataFrame(columns=["from", "total_volume", "open_rate", "ignorance_score", "unread_count"])
+        report = generate_cleanup_report(empty_df)
+        assert isinstance(report, str)
+        assert "EMAIL AUDIT REPORT" in report
+        # Should handle empty data gracefully
+        assert "0 senders" in report
+
+    def test_compare_metrics_identical(self):
+        """Test comparing identical before/after metrics."""
+        identical = {"unread_percentage": 50.0, "top_ignorance_score": 1000, "average_open_rate": 25.0}
+        comparison = compare_metrics(identical, identical)
+
+        assert comparison["unread_improvement"] == 0.0
+        assert comparison["top_score_reduction"] == 0
+        assert comparison["open_rate_improvement"] == 0.0
+
+    def test_get_top_noise_makers_empty_df(self):
+        """Test getting top noise makers from empty DataFrame."""
+        # Create DataFrame with expected columns but no rows
+        empty_df = pd.DataFrame(columns=["from", "total_volume", "open_rate", "ignorance_score", "unread_count"])
+        result = get_top_noise_makers(empty_df, 3)
+        assert len(result) == 0
+        assert list(result.columns) == ["from", "total_volume", "open_rate", "ignorance_score", "unread_count"]
+
+    def test_get_top_noise_makers_fewer_than_requested(self, sample_audit_data):
+        """Test getting top noise makers when fewer senders than requested."""
+        result = get_top_noise_makers(sample_audit_data, 10)  # Request 10 but only have 5
+        assert len(result) == 5  # Should return all available
