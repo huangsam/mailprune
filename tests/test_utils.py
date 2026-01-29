@@ -7,6 +7,12 @@ import json
 import pandas as pd
 import pytest
 
+from mailprune.utils.audit import (
+    aggregate_and_score,
+    get_sender_snippets_from_cache,
+    get_sender_subjects_from_cache,
+    prune_cache,
+)
 from mailprune.utils.helpers import (
     calculate_percentage,
     format_sender_list,
@@ -119,3 +125,139 @@ class TestHelperFunctions:
         with open(cache_file) as f:
             saved_data = json.load(f)
         assert saved_data == test_data
+
+
+class TestAuditUtils:
+    """Test audit utility functions."""
+
+    def test_get_sender_subjects_from_cache(self):
+        """Test extracting sender-subject mapping from cache."""
+        mock_cache = {
+            "msg1": {"payload": {"headers": [{"name": "From", "value": "sender1@example.com"}, {"name": "Subject", "value": "Test Subject 1"}]}},
+            "msg2": {"payload": {"headers": [{"name": "From", "value": "sender1@example.com"}, {"name": "Subject", "value": "Test Subject 2"}]}},
+            "msg3": {"payload": {"headers": [{"name": "From", "value": "sender2@example.com"}, {"name": "Subject", "value": "Different Subject"}]}},
+        }
+
+        result = get_sender_subjects_from_cache(mock_cache)
+
+        assert "sender1@example.com" in result
+        assert "sender2@example.com" in result
+        assert len(result["sender1@example.com"]) == 2
+        assert len(result["sender2@example.com"]) == 1
+        assert "Test Subject 1" in result["sender1@example.com"]
+        assert "Test Subject 2" in result["sender1@example.com"]
+        assert "Different Subject" in result["sender2@example.com"]
+
+    def test_get_sender_subjects_from_cache_missing_headers(self):
+        """Test handling cache entries with missing headers."""
+        mock_cache = {
+            "msg1": {
+                "payload": {
+                    "headers": [
+                        {"name": "From", "value": "sender@example.com"}
+                        # Missing Subject header
+                    ]
+                }
+            },
+            "msg2": {
+                "payload": {}  # Missing headers entirely
+            },
+        }
+
+        result = get_sender_subjects_from_cache(mock_cache)
+
+        assert "sender@example.com" in result
+        assert len(result["sender@example.com"]) == 1
+        assert result["sender@example.com"][0] == ""  # Empty subject
+
+    def test_get_sender_snippets_from_cache(self):
+        """Test extracting sender-snippet mapping from cache."""
+        mock_cache = {
+            "msg1": {"payload": {"headers": [{"name": "From", "value": "sender1@example.com"}]}, "snippet": "This is a test email snippet"},
+            "msg2": {"payload": {"headers": [{"name": "From", "value": "sender1@example.com"}]}, "snippet": "Another snippet from same sender"},
+            "msg3": {
+                "payload": {"headers": [{"name": "From", "value": "sender2@example.com"}]},
+                "snippet": "",  # Empty snippet should be ignored
+            },
+        }
+
+        result = get_sender_snippets_from_cache(mock_cache)
+
+        assert "sender1@example.com" in result
+        assert "sender2@example.com" not in result  # Empty snippet ignored
+        assert len(result["sender1@example.com"]) == 2
+        assert "This is a test email snippet" in result["sender1@example.com"]
+        assert "Another snippet from same sender" in result["sender1@example.com"]
+
+    def test_aggregate_and_score(self):
+        """Test aggregating email data and calculating ignorance scores."""
+        # Create mock email data
+        mock_df = pd.DataFrame(
+            {
+                "from": ["sender1@example.com", "sender1@example.com", "sender2@example.com", "sender2@example.com", "sender2@example.com"],
+                "id": ["id1", "id2", "id3", "id4", "id5"],
+                "unread": [True, False, True, True, False],
+                "starred": [False, True, False, False, False],
+                "important": [False, False, True, False, False],
+                "social": [False, False, False, True, False],
+                "updates": [True, False, False, False, False],
+                "promotions": [False, False, False, False, True],
+                "age_days": [1.0, 2.0, 1.5, 3.0, 2.5],
+            }
+        )
+
+        result = aggregate_and_score(mock_df)
+
+        # Check sender1 aggregation
+        sender1_data = result[result["from"] == "sender1@example.com"].iloc[0]
+        assert sender1_data["total_volume"] == 2
+        assert sender1_data["unread_count"] == 1  # One unread email
+        assert sender1_data["starred_count"] == 1
+        assert sender1_data["important_count"] == 0
+        assert sender1_data["social_count"] == 0
+        assert sender1_data["updates_count"] == 1
+        assert sender1_data["promotions_count"] == 0
+        assert sender1_data["open_rate"] == 50.0  # 1 out of 2 emails opened
+        assert sender1_data["ignorance_score"] == 100.0  # 2 * (100 - 50)
+
+        # Check sender2 aggregation
+        sender2_data = result[result["from"] == "sender2@example.com"].iloc[0]
+        assert sender2_data["total_volume"] == 3
+        assert sender2_data["unread_count"] == 2  # Two unread emails
+        assert sender2_data["open_rate"] == pytest.approx(33.33, rel=1e-2)
+        assert sender2_data["ignorance_score"] == pytest.approx(200.0, rel=1e-2)  # 3 * (100 - 33.33)
+
+    def test_aggregate_and_score_empty_df(self):
+        """Test aggregate_and_score with empty DataFrame."""
+        empty_df = pd.DataFrame(columns=["from", "id", "unread", "starred", "important", "social", "updates", "promotions", "age_days"])
+        result = aggregate_and_score(empty_df)
+        assert len(result) == 0
+
+    def test_prune_cache(self):
+        """Test pruning removed emails from cache."""
+        mock_cache = {
+            "msg1": {"data": "email1"},
+            "msg2": {"data": "email2"},
+            "msg3": {"data": "email3"},
+        }
+        current_ids = {"msg1", "msg3"}  # msg2 was deleted
+
+        pruned_count = prune_cache(mock_cache, current_ids)
+
+        assert pruned_count == 1
+        assert "msg1" in mock_cache
+        assert "msg2" not in mock_cache  # Should be removed
+        assert "msg3" in mock_cache
+
+    def test_prune_cache_no_pruning_needed(self):
+        """Test prune_cache when all emails still exist."""
+        mock_cache = {
+            "msg1": {"data": "email1"},
+            "msg2": {"data": "email2"},
+        }
+        current_ids = {"msg1", "msg2", "msg3"}  # All cache emails still exist
+
+        pruned_count = prune_cache(mock_cache, current_ids)
+
+        assert pruned_count == 0
+        assert len(mock_cache) == 2  # No change
