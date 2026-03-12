@@ -3,11 +3,10 @@ Tests for mailprune utility functions.
 """
 
 import json
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 import pytest
-
-from datetime import UTC, datetime, timedelta
 
 from mailprune.utils.audit import (
     aggregate_and_score,
