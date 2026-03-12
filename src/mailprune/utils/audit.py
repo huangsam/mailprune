@@ -331,7 +331,7 @@ def get_sender_subjects_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str
     for cached_item in cache.values():
         email = get_response_from_cache_item(cached_item)
         headers = email.get("payload", {}).get("headers", [])
-        
+
         # Helper to get header case-insensitively
         def get_header(name: str, default: str = "") -> str:
             name_lower = name.lower()
