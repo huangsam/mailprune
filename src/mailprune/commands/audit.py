@@ -4,9 +4,11 @@ Audit command implementation for Mailprune.
 
 import logging
 import time
+from datetime import UTC, datetime
 
 import pandas as pd
 
+from mailprune.constants import DEFAULT_CACHE_TTL_DAYS
 from mailprune.utils.audit import (
     aggregate_and_score,
     fetch_message_ids,
@@ -16,12 +18,12 @@ from mailprune.utils.audit import (
     save_report,
     setup_audit,
 )
-from mailprune.utils.helpers import save_email_cache
+from mailprune.utils.helpers import is_cache_entry_stale, save_email_cache
 
 logger = logging.getLogger(__name__)
 
 
-def perform_audit(max_emails: int, query: str, cache_path: str) -> pd.DataFrame | None:
+def perform_audit(max_emails: int, query: str, cache_path: str, refresh: bool = False) -> pd.DataFrame | None:
     """Perform Phase 1 Email Audit.
 
     The steps are as follows:
@@ -47,11 +49,21 @@ def perform_audit(max_emails: int, query: str, cache_path: str) -> pd.DataFrame 
         fetch_time: float = time.time()
         logger.info(f"Fetched {len(messages)} message IDs in {fetch_time - start_time:.2f}s")
 
-        # Identify messages to fetch
+        # Identify messages to fetch (including stale ones)
         current_email_ids = {m["id"] for m in messages}
-        messages_to_fetch = [m for m in messages if m["id"] not in email_cache]
+        now = datetime.now(UTC)
+        messages_to_fetch = []
 
-        # Fetch uncached messages
+        for m in messages:
+            msg_id = m["id"]
+            if msg_id not in email_cache or refresh:
+                messages_to_fetch.append(m)
+            else:
+                cached_item = email_cache[msg_id]
+                if is_cache_entry_stale(cached_item, DEFAULT_CACHE_TTL_DAYS, now):
+                    messages_to_fetch.append(m)
+
+        # Fetch uncached/stale messages
         fetched_count = fetch_uncached_messages(service, email_cache, messages_to_fetch)
 
         logger.info(f"Processed cache: {len(messages) - len(messages_to_fetch)} cached, {fetched_count} fetched")

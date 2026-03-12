@@ -23,7 +23,7 @@ from ..constants import (
     GMAIL_API_VERSION,
     GmailLabels,
 )
-from .helpers import load_email_cache
+from .helpers import get_response_from_cache_item, load_email_cache
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,11 @@ def fetch_uncached_messages(service, email_cache: dict[str, Any], messages_to_fe
             if exc:
                 logger.warning(f"Failed to fetch message {msg_id}: {exc}")
             else:
-                email_cache[msg_id] = resp
+                # Store message with metadata for TTL check
+                email_cache[msg_id] = {
+                    "fetched_at": datetime.now(UTC).isoformat(),
+                    "response": resp,
+                }
                 batch_fetched += 1
                 logger.debug(f"Fetched and cached message {msg_id}")
         return batch_fetched
@@ -186,7 +190,9 @@ def process_messages(email_cache: dict[str, Any], messages: list[dict[str, str]]
         if msg_id not in email_cache:
             logger.warning(f"Skipping message {msg_id} - not in cache (likely failed to fetch due to rate limit)")
             continue
-        cached_msg = email_cache[msg_id]
+        # Support both old flat format and new wrapped format
+        cached_item = email_cache[msg_id]
+        cached_msg = get_response_from_cache_item(cached_item)
         headers: list[dict[str, str]] = cached_msg.get("payload", {}).get("headers", [])
         from_header: str = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
         subject: str = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
@@ -316,7 +322,8 @@ def save_report(audit_summary: pd.DataFrame) -> None:
 def get_sender_subjects_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
     """Extract sender-subject mapping from email cache."""
     sender_subjects = defaultdict(list)
-    for email in cache.values():
+    for cached_item in cache.values():
+        email = get_response_from_cache_item(cached_item)
         headers = email.get("payload", {}).get("headers", [])
         sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
         subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
@@ -327,7 +334,8 @@ def get_sender_subjects_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str
 def get_sender_snippets_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
     """Extract sender-snippet mapping from email cache for content analysis."""
     sender_snippets = defaultdict(list)
-    for email in cache.values():
+    for cached_item in cache.values():
+        email = get_response_from_cache_item(cached_item)
         headers = email.get("payload", {}).get("headers", [])
         sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
         snippet = email.get("snippet", "")

@@ -107,7 +107,12 @@ def auth() -> None:
     default=str(DEFAULT_CACHE_PATH),
     help=f"Path to email cache file (default: {DEFAULT_CACHE_PATH})",
 )
-def audit(max_emails: int, query: str, cache_path: str) -> None:
+@click.option(
+    "--refresh",
+    is_flag=True,
+    help="Force refresh of email cache (re-fetch all emails from Gmail)",
+)
+def audit(max_emails: int, query: str, cache_path: str, refresh: bool) -> None:
     """
     Run email audit.
 
@@ -117,8 +122,8 @@ def audit(max_emails: int, query: str, cache_path: str) -> None:
     if max_emails <= 0:
         raise click.BadParameter("max-emails must be a positive integer")
 
-    logger.info(f"Running Phase 1 Audit with {max_emails} emails...")
-    audit_summary = perform_audit(max_emails, query, cache_path)
+    logger.info(f"Running Phase 1 Audit with {max_emails} emails (refresh={refresh})...")
+    audit_summary = perform_audit(max_emails, query, cache_path, refresh=refresh)
 
     if audit_summary is None:
         raise click.ClickException("Failed to perform audit. Check that Gmail credentials are properly configured.")

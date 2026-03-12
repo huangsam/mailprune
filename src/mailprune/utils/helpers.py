@@ -5,6 +5,7 @@ Utility functions for the mailprune project.
 import json
 import logging
 import os
+from datetime import UTC, datetime
 from typing import Any
 
 import pandas as pd
@@ -33,6 +34,28 @@ def save_email_cache(cache: dict[str, dict[str, Any]], cache_path: str = DEFAULT
         logger.info(f"Saved {len(cache)} emails to cache")
     except OSError as e:
         logger.error(f"Failed to save cache: {e}")
+
+
+def get_response_from_cache_item(item: dict[str, Any]) -> dict[str, Any]:
+    """Extract raw Gmail API response from cache item, supporting both old and new formats."""
+    if isinstance(item, dict) and "response" in item:
+        return item["response"]
+    return item
+
+
+def is_cache_entry_stale(item: Any, ttl_days: int, now: datetime) -> bool:
+    """Check if a cache entry is stale based on its timestamp and TTL."""
+    if not isinstance(item, dict) or "fetched_at" not in item:
+        return True  # Old format or missing timestamp is considered stale
+
+    try:
+        fetched_at = datetime.fromisoformat(item["fetched_at"])
+        # Ensure fetched_at is aware if now is aware
+        if fetched_at.tzinfo is None and now.tzinfo is not None:
+            fetched_at = fetched_at.replace(tzinfo=UTC)
+        return (now - fetched_at).days >= ttl_days
+    except (ValueError, TypeError):
+        return True
 
 
 # Common constants

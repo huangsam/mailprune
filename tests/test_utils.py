@@ -7,6 +7,8 @@ import json
 import pandas as pd
 import pytest
 
+from datetime import UTC, datetime, timedelta
+
 from mailprune.utils.audit import (
     aggregate_and_score,
     get_sender_snippets_from_cache,
@@ -18,6 +20,8 @@ from mailprune.utils.helpers import (
     format_sender_list,
     get_category_distribution,
     get_engagement_tier_names,
+    get_response_from_cache_item,
+    is_cache_entry_stale,
     load_email_cache,
     save_email_cache,
 )
@@ -126,6 +130,36 @@ class TestHelperFunctions:
             saved_data = json.load(f)
         assert saved_data == test_data
 
+    def test_get_response_from_cache_item(self):
+        """Test extracting response from various cache formats."""
+        # Old flat format
+        old_item = {"id": "123", "snippet": "test"}
+        assert get_response_from_cache_item(old_item) == old_item
+
+        # New wrapped format
+        response = {"id": "123", "snippet": "test"}
+        new_item = {"fetched_at": "2024-01-01T00:00:00Z", "response": response}
+        assert get_response_from_cache_item(new_item) == response
+
+    def test_is_cache_entry_stale(self):
+        """Test staleness check with various conditions."""
+        now = datetime.now(UTC)
+        ttl = 7
+
+        # Old format (no fetched_at) -> Stale
+        assert is_cache_entry_stale({"id": "123"}, ttl, now) is True
+
+        # New format, fresh -> Not stale
+        fresh_date = (now - timedelta(days=2)).isoformat()
+        assert is_cache_entry_stale({"fetched_at": fresh_date}, ttl, now) is False
+
+        # New format, stale -> Stale
+        stale_date = (now - timedelta(days=10)).isoformat()
+        assert is_cache_entry_stale({"fetched_at": stale_date}, ttl, now) is True
+
+        # Invalid date format -> Stale
+        assert is_cache_entry_stale({"fetched_at": "not-a-date"}, ttl, now) is True
+
 
 class TestAuditUtils:
     """Test audit utility functions."""
@@ -147,6 +181,21 @@ class TestAuditUtils:
         assert "Test Subject 1" in result["sender1@example.com"]
         assert "Test Subject 2" in result["sender1@example.com"]
         assert "Different Subject" in result["sender2@example.com"]
+
+    def test_get_sender_subjects_from_cache_mixed_formats(self):
+        """Test that subject extraction works with a mix of old and new formats."""
+        mock_cache = {
+            "msg_old": {"payload": {"headers": [{"name": "From", "value": "old@example.com"}, {"name": "Subject", "value": "Old Subject"}]}},
+            "msg_new": {
+                "fetched_at": "2024-01-01T00:00:00Z",
+                "response": {"payload": {"headers": [{"name": "From", "value": "new@example.com"}, {"name": "Subject", "value": "New Subject"}]}},
+            },
+        }
+
+        result = get_sender_subjects_from_cache(mock_cache)
+
+        assert result["old@example.com"] == ["Old Subject"]
+        assert result["new@example.com"] == ["New Subject"]
 
     def test_get_sender_subjects_from_cache_missing_headers(self):
         """Test handling cache entries with missing headers."""
