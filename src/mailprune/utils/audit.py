@@ -194,9 +194,15 @@ def process_messages(email_cache: dict[str, Any], messages: list[dict[str, str]]
         cached_item = email_cache[msg_id]
         cached_msg = get_response_from_cache_item(cached_item)
         headers: list[dict[str, str]] = cached_msg.get("payload", {}).get("headers", [])
-        from_header: str = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
-        subject: str = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
-        date_str: str = next((h["value"] for h in headers if h["name"] == "Date"), "Unknown")
+
+        # Helper to get header case-insensitively
+        def get_header(name: str, default: str = "") -> str:
+            name_lower = name.lower()
+            return next((h["value"] for h in headers if h["name"].lower() == name_lower), default)
+
+        from_header: str = get_header("From", "Unknown")
+        subject: str = get_header("Subject", "No Subject")
+        date_str: str = get_header("Date", "Unknown")
 
         # Extract email snippet (preview of body content)
         snippet: str = cached_msg.get("snippet", "")
@@ -325,8 +331,14 @@ def get_sender_subjects_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str
     for cached_item in cache.values():
         email = get_response_from_cache_item(cached_item)
         headers = email.get("payload", {}).get("headers", [])
-        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
-        subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
+        
+        # Helper to get header case-insensitively
+        def get_header(name: str, default: str = "") -> str:
+            name_lower = name.lower()
+            return next((h["value"] for h in headers if h["name"].lower() == name_lower), default)
+
+        sender = get_header("From", "Unknown")
+        subject = get_header("Subject", "")
         sender_subjects[sender].append(subject)
     return dict(sender_subjects)
 
@@ -337,7 +349,13 @@ def get_sender_snippets_from_cache(cache: dict[str, dict[str, Any]]) -> dict[str
     for cached_item in cache.values():
         email = get_response_from_cache_item(cached_item)
         headers = email.get("payload", {}).get("headers", [])
-        sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown")
+
+        # Helper to get header case-insensitively
+        def get_header(name: str, default: str = "") -> str:
+            name_lower = name.lower()
+            return next((h["value"] for h in headers if h["name"].lower() == name_lower), default)
+
+        sender = get_header("From", "Unknown")
         snippet = email.get("snippet", "")
         if snippet:  # Only include emails with content snippets
             sender_snippets[sender].append(snippet)
