@@ -16,7 +16,7 @@ Mailprune allowed me to execute a much-needed 'digital deep clean' in record tim
 - **Smart Auditing**: Analyzes inbox volume, open rates, and patterns
 - **Targeted Cleanup**: Recommends unsubscribes and filters
 - **Advanced Analysis**: Engagement tiers, clustering, and content patterns
-- **AI & MCP Integration**: Built-in Model Context Protocol (MCP) server for direct AI assistant integration
+- **AI & MCP Integration**: Built-in MCP server for direct AI assistant integration
 - **Fast & Efficient**: Parallel processing with intelligent caching
 
 ## 🚀 Quick Start
@@ -47,6 +47,3 @@ uv run mailprune-mcp
 ```
 
 Run `uv run mailprune --help` for all options.
-
-## 🤖 For AI Agents
-See [AGENTS.md](AGENTS.md) for development details, testing, and automation guidelines.

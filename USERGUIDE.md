@@ -37,7 +37,6 @@ uv sync
 ```
 
 ### Step 2: Set Up Gmail API Access
-
 Mailprune uses Google's Gmail API to analyze your emails securely. This requires a one-time setup:
 
 1. **Enable Gmail API**:
@@ -225,28 +224,24 @@ uv run mailprune cluster --n-clusters 5
 ## Action Plan
 
 ### Phase 1: Quick Wins (Week 1)
-
 - Unsubscribe zero-engagement promotional senders
 - Block spam-like senders (high volume, low engagement)
 - Set up basic promotional filters
 - **Impact:** 20-40% reduction in daily email volume
 
 ### Phase 2: Strategic Filtering (Week 2)
-
 - Create Gmail filters for promotional content
 - Set up transactional email auto-archiving
 - Label high-value informational senders
 - **Impact:** 60-80% of emails now auto-organized
 
 ### Phase 3: Optimization (Week 3-4)
-
 - Review medium-engagement senders
 - Adjust filters based on clustering results
 - Set up monthly audit reminders
 - **Impact:** 90%+ email automation
 
 ### Phase 4: Maintenance (Ongoing)
-
 - **Weekly:** Quick check of new subscriptions
 - **Monthly:** `uv run mailprune audit --max-emails 500`
 - **Quarterly:** Full assessment and filter review

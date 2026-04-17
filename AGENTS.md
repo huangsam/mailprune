@@ -1,6 +1,7 @@
 # Mailprune - Agent Documentation
 
 ## Project Structure & Key Files
+
 ```
 mailprune/
 ├── src/mailprune/         # Core package
@@ -12,12 +13,14 @@ mailprune/
 ```
 
 ## Setup & Testing
+
 - **Install**: `uv sync --editable`
 - **Quality**: `uv run ruff check --fix`, `uv run mypy src/`
 - **Test Suite**: `uv run python -m pytest`
 - **MCP Test**: `uv run pytest tests/test_mcp.py`
 
 ## MCP Capabilities
+
 Exposed via `mailprune-mcp`.
 
 ### Tools
@@ -32,6 +35,7 @@ Exposed via `mailprune-mcp`.
 - `mailprune://guidance/noise-metrics`: Formula for Ignorance Score.
 
 ## Development Guidelines
+
 - **Modifications**: Always run full test suite and verify MCP registration.
 - **Dependencies**: Requires valid `credentials.json` in `data/` for audit operations.
 - **Concurrency**: MCP tools use `anyio` for thread-safe blocking I/O offloading.
