@@ -1,125 +1,38 @@
 # Mailprune - Agent Documentation
 
-This document provides information specifically for AI agents and automated tools working with the Mailprune codebase.
-
-## Quick Start for Agents
-
-For a comprehensive guide on running Mailprune commands and interpreting results, see [USERGUIDE.md](USERGUIDE.md).
-
-## Project Structure
-
+## Project Structure & Key Files
 ```
 mailprune/
-├── src/mailprune/          # Core package
-│   ├── commands/          # CLI command implementations
-│   └── utils/             # Utility modules
-├── tests/                 # Test suite
-├── data/                  # Data files and cache
-├── pyproject.toml         # Project configuration and dependencies
-├── uv.lock               # Dependency lock file
-└── AGENTS.md             # This documentation
+├── src/mailprune/         # Core package
+│   ├── commands/         # Logic: audit, cluster, report, engagement, patterns
+│   ├── mcp_server.py     # FastMCP Server (Entry: mailprune-mcp)
+│   └── constants.py      # Config & Paths
+├── data/                 # noise_report.csv, email_cache.json, token.json
+└── AGENTS.md             # This file
 ```
 
-## Installation & Setup
-
-See [USERGUIDE.md](USERGUIDE.md) for installation instructions. For agent-specific setup:
-
-- Ensure Python 3.12+ and uv are available in your environment
-- Install in editable mode for development: `uv sync --editable`
-- For testing, additional dependencies are included in the sync
-
-## Testing
-
-Run the test suite:
-
-```bash
-# Run all tests
-uv run python -m pytest
-
-# Run with coverage
-uv run python -m pytest --cov=src/mailprune
-
-# Run specific test file
-uv run python -m pytest tests/test_analysis.py
-```
-
-## Development
-
-### Code Quality
-
-```bash
-# Format code
-uv run ruff format
-
-# Lint code
-uv run ruff check --fix
-
-# Type checking
-uv run mypy src/
-```
-
-### Adding Tests
-
-Tests are located in the `tests/` directory. Use pytest fixtures for test data and Click's test runner for CLI testing.
-
-## Key Files for Agents
-
-### Core Modules
-- `src/mailprune/constants.py` - Configuration constants and baseline metrics
-- `src/mailprune/utils/analysis.py` - Email analysis, metrics calculations, and text processing functions
-- `src/mailprune/utils/audit.py` - Gmail API integration, data extraction, and low-level audit utilities
-- `src/mailprune/utils/helpers.py` - General utility functions for data I/O, formatting, and calculations
-
-### Command Modules
-- `src/mailprune/commands/audit.py` - High-level audit execution command
-- `src/mailprune/commands/cluster.py` - Sender clustering analysis command
-- `src/mailprune/commands/report.py` - Comprehensive email audit report generation
-- `src/mailprune/commands/engagement.py` - Sender engagement pattern analysis
-- `src/mailprune/commands/patterns.py` - Content pattern analysis for senders
-
-### CLI Entry Points
-- `mailprune` - Main unified CLI tool with all commands (installed via entry point)
-- `mailprune-mcp` - FastMCP server for direct AI assistant integration
-
-### Data Files
-- `data/noise_report.csv` - Generated audit results with sender metrics
-- `data/email_cache.json` - Cached email metadata for analysis
-- `data/credentials.json` - Gmail API credentials
-- `data/token.json` - Gmail API authentication token
-- `data/google-details.txt` - Additional Gmail API configuration details
+## Setup & Testing
+- **Install**: `uv sync --editable`
+- **Quality**: `uv run ruff check --fix`, `uv run mypy src/`
+- **Test Suite**: `uv run python -m pytest`
+- **MCP Test**: `uv run pytest tests/test_mcp.py`
 
 ## MCP Capabilities
+Exposed via `mailprune-mcp`.
 
-Mailprune exposes its analysis engine via the Model Context Protocol (MCP), allowing AI assistants to directly interact with the inbox.
+### Tools
+- `audit`: Fetch Gmail metadata & calculate Ignorance Scores. (Network I/O)
+- `report`: Generate actionable cleanup summaries.
+- `patterns`: NLP-driven content & intent analysis. (CPU Heavy)
+- `engagement`: Categorize senders by interaction tiers.
+- `cluster`: Unsupervised sender clustering.
 
-### MCP Tools
-- `audit` - Triggers a fresh Gmail audit (Phase 1).
-- `report` - Generates a comprehensive cleanup report.
-- `patterns` - Performs NLP-driven content and intent analysis.
-- `engagement` - Analyzes sender interaction tiers.
-- `cluster` - Performs unsupervised sender clustering.
+### Resources
+- `mailprune://guidance/cleanup-strategy`: Logic for interpreting results.
+- `mailprune://guidance/noise-metrics`: Formula for Ignorance Score.
 
-### MCP Resources
-- `mailprune://guidance/cleanup-strategy` - Logic for interpreting clusters and intent.
-- `mailprune://guidance/noise-metrics` - Mathematical breakdown of the Ignorance Score.
-
-## Agent Guidelines
-
-### When Modifying Code
-- Always run tests after changes: `uv run python -m pytest`
-- Format code: `uv run ruff format`
-- Lint code: `uv run ruff check --fix`
-- Type check: `uv run mypy src/`
-- **Verify MCP tool registration**: `uv run pytest tests/test_mcp.py`
-
-### When Adding Features
-- Add corresponding tests in `tests/` directory
-- Update type hints in function signatures
-- Follow existing code patterns and naming conventions
-- Update this documentation if project structure changes
-
-### Data Dependencies
-- Audit operations require Gmail API setup with valid credentials
-- Analysis operations require existing `data/noise_report.csv` file
-- Cache operations work with `data/email_cache.json` if present
-- MCP tools require `mcp` package and `anyio` for thread offloading
+## Development Guidelines
+- **Modifications**: Always run full test suite and verify MCP registration.
+- **Dependencies**: Requires valid `credentials.json` in `data/` for audit operations.
+- **Concurrency**: MCP tools use `anyio` for thread-safe blocking I/O offloading.
+- **Standard**: Follow PEP 8 and existing async patterns in `mcp_server.py`.
