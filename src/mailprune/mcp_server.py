@@ -32,13 +32,51 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP("Mailprune")
 
 
+@mcp.resource("mailprune://guidance/cleanup-strategy")
+def get_cleanup_strategy() -> str:
+    """Provides the logic for how to handle different sender clusters."""
+    return """# Mailprune Cleanup Strategy Guidance
+
+Use this guidance to interpret the results from the `cluster` and `patterns` tools.
+
+## Cluster Interpretation
+- **Cluster 4 (Silent Noise)**: Senders with low volume but near-zero open rates. 
+  - **Action**: High-confidence "Unsubscribe" candidates.
+- **Cluster 2 (Mega Noise)**: High-volume newsletters. 
+  - **Action**: Compare `patterns` intent. If "promotional", suggest Unsubscribe. If "informational", suggest a weekly digest.
+- **Cluster 3/1 (Mid-Tier)**: Transactional or Utility alerts.
+  - **Action**: Suggest "Gmail Filters" to skip the inbox rather than unsubscribing.
+
+## Intent Guidance
+- **Promotional**: Sales, offers, marketing. Suggest Unsubscribe if engagement < 50%.
+- **Transactional**: Receipts, orders, security. Suggest Filtering/Labeling.
+- **Social/Informational**: Newsletters, updates. Suggest review based on volume.
+"""
+
+
+@mcp.resource("mailprune://guidance/noise-metrics")
+def get_noise_metrics() -> str:
+    """Explains how the 'Ignorance Score' is calculated."""
+    return """# Mailprune Noise Metrics (Ignorance Score)
+
+The 'Ignorance Score' is the primary metric used to rank senders in Mailprune.
+
+## Formula
+`Ignorance Score = total_volume * (100 - open_rate)`
+
+## Why this metric?
+- **High Volume, High Open Rate**: Low score (e.g. 100 emails, 100% open = 0 score). These are emails you value.
+- **High Volume, Zero Open Rate**: Maximum score (e.g. 100 emails, 0% open = 10,000 score). These are your worst noise makers.
+- **Low Volume, Zero Open Rate**: Low score (e.g. 1 email, 0% open = 100 score). These are minor annoyances.
+"""
+
+
 @mcp.tool()
 async def audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:trash", refresh: bool = False) -> str:
     """Run an email audit to identify noise makers in your Gmail inbox.
 
-    This tool fetches recent email metadata, analyzes sender behavior, and
-    calculates 'ignorance scores' to identify which senders are contributing
-    most to inbox clutter.
+    This is the STARTING POINT for any analysis. It performs network I/O to fetch
+    metadata from Gmail and calculates the initial 'Ignorance Scores' for all senders.
 
     Args:
         max_emails: Maximum number of emails to audit (default is 2000).
@@ -63,13 +101,16 @@ async def audit(max_emails: int = DEFAULT_MAX_EMAILS, query: str = "-label:trash
         f"Top 10 Noise Makers (ranked by Ignorance Score):\n"
         f"-----------------------------------------------\n"
         f"{summary}\n\n"
-        f"Use the 'report' tool for a more detailed analysis and cleanup recommendations."
+        f"Tip: Reference 'mailprune://guidance/noise-metrics' for more info on the scores."
     )
 
 
 @mcp.tool()
 async def report(brief: bool = False) -> str:
     """Generate a comprehensive email audit and cleanup report based on the last audit.
+
+    Provides actionable insights, engagement tiers, and specific cleanup recommendations
+    (Unsubscribe vs Filter) based on the data from the last 'audit' call.
 
     Args:
         brief: If True, returns a shorter summary report.
@@ -82,9 +123,8 @@ async def report(brief: bool = False) -> str:
 async def patterns(top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> str:
     """Analyze content patterns and inferred intent for top senders using email snippets.
 
-    This is a 'heavy' analysis tool that examines email subjects and snippets to extract
-    keywords, entities, and infer the sender's intent (e.g., promotional, transactional).
-    Use this when you need deep context on WHY a specific sender is considered noise.
+    HEAVY TOOL: Performs NLP processing (entity extraction, intent inference) on
+    email snippets. Use this to find the 'Why' behind high noise scores.
 
     Args:
         top_n: Number of top senders to analyze (default is 5).
@@ -105,6 +145,9 @@ async def patterns(top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> 
 async def engagement(tier: str = "all") -> str:
     """Analyze sender engagement patterns and categorize them into tiers.
 
+    Breaks down your inbox into High, Medium, Low, and Zero engagement groups.
+    Useful for seeing the 'Long Tail' of senders you might have missed.
+
     Args:
         tier: Engagement tier to analyze ('high', 'medium', 'low', 'zero', or 'all').
     """
@@ -114,9 +157,10 @@ async def engagement(tier: str = "all") -> str:
 
 @mcp.tool()
 async def cluster(n_clusters: int = 5) -> str:
-    """Group senders into clusters for bulk cleanup recommendations.
+    """Group senders into behavioral clusters using unsupervised learning (K-Means).
 
-    Uses unsupervised learning to group senders with similar behavior patterns.
+    Identifies 'Peer Groups' of senders (e.g. Cluster 4: Silent Newsletters).
+    Reference 'mailprune://guidance/cleanup-strategy' to interpret these clusters.
 
     Args:
         n_clusters: Number of clusters to create (default is 5).
