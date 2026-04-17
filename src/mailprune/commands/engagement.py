@@ -2,8 +2,6 @@
 Engagement command implementation for Mailprune.
 """
 
-import click
-
 from mailprune.utils import (
     calculate_percentage,
     get_engagement_tier_names,
@@ -12,7 +10,7 @@ from mailprune.utils import (
 )
 
 
-def analyze_engagement(csv_path: str, tier: str) -> None:
+def analyze_engagement(csv_path: str, tier: str) -> str:
     """Analyze sender engagement patterns and tiers.
 
     This command categorizes email senders into engagement tiers based on their
@@ -30,13 +28,14 @@ def analyze_engagement(csv_path: str, tier: str) -> None:
     """
     df = load_audit_data(csv_path)
     if df.empty:
-        return
+        return "No audit data found. Run 'mailprune audit' first."
 
     total_emails = df["total_volume"].sum()
 
-    click.echo("=== 🎯 ENGAGEMENT ANALYSIS ===")
-    click.echo(f"Total Emails: {total_emails}")
-    click.echo()
+    output = []
+    output.append("=== 🎯 ENGAGEMENT ANALYSIS ===")
+    output.append(f"Total Emails: {total_emails}")
+    output.append("")
 
     # Define engagement tiers
     engagement_tiers = get_engagement_tiers(df)
@@ -56,36 +55,36 @@ def analyze_engagement(csv_path: str, tier: str) -> None:
                 tier_emails = tier_df["total_volume"].sum()
                 tier_senders = len(tier_df)
                 avg_open_rate = tier_df["open_rate"].mean()
-                click.echo(f"🎯 {tier_names[tier_key]}:")
-                click.echo(f"  • {tier_senders} senders, {tier_emails} emails ({calculate_percentage(tier_emails, total_emails)})")
-                click.echo(f"  • Average open rate: {avg_open_rate:.1f}%")
-                click.echo()
+                output.append(f"🎯 {tier_names[tier_key]}:")
+                output.append(f"  • {tier_senders} senders, {tier_emails} emails ({calculate_percentage(tier_emails, total_emails)})")
+                output.append(f"  • Average open rate: {avg_open_rate:.1f}%")
+                output.append("")
 
         # Show top performers in high engagement tier
         high_engagement = engagement_tiers["high"]
         if len(high_engagement) > 0:
-            click.echo("🏆 Top High-Engagement Senders:")
+            output.append("🏆 Top High-Engagement Senders:")
             top_high = high_engagement.nlargest(3, "total_volume")
             for _, row in top_high.iterrows():
-                click.echo(f"  • {row['from'][:40]:<40} | {int(row['total_volume']):3d} emails | {row['open_rate']:5.1f}% open")
-            click.echo()
+                output.append(f"  • {row['from'][:40]:<40} | {int(row['total_volume']):3d} emails | {row['open_rate']:5.1f}% open")
+            output.append("")
     else:
         # Show detailed listing for specific tier
         if tier not in engagement_tiers:
-            click.echo(f"Invalid tier: {tier}. Use 'high', 'medium', 'low', or 'zero'.")
-            return
+            return f"Invalid tier: {tier}. Use 'high', 'medium', 'low', or 'zero'."
 
         tier_df = engagement_tiers[tier]
         if len(tier_df) == 0:
-            click.echo(f"No senders found in {tier_names[tier].lower()}.")
-            return
+            return f"No senders found in {tier_names[tier].lower()}."
 
         tier_emails = tier_df["total_volume"].sum()
-        click.echo(f"=== 🚫 {tier_names[tier].upper()} SENDERS ===")
-        click.echo(f"Total: {len(tier_df)} senders, {tier_emails} emails ({calculate_percentage(tier_emails, total_emails)})")
-        click.echo()
+        output.append(f"=== 🚫 {tier_names[tier].upper()} SENDERS ===")
+        output.append(f"Total: {len(tier_df)} senders, {tier_emails} emails ({calculate_percentage(tier_emails, total_emails)})")
+        output.append("")
 
         # Sort by volume descending and show all senders in this tier
         sorted_senders = tier_df.sort_values("total_volume", ascending=False)
         for _, row in sorted_senders.iterrows():
-            click.echo(f"{int(row['total_volume']):2d} emails | {row['from']}")
+            output.append(f"{int(row['total_volume']):2d} emails | {row['from']}")
+
+    return "\n".join(output)

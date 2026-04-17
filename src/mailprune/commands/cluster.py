@@ -2,15 +2,13 @@
 Cluster command implementation for Mailprune.
 """
 
-import click
-
 from mailprune.utils import (
     cluster_senders_unsupervised,
     load_audit_data,
 )
 
 
-def analyze_clusters(csv_path: str, n_clusters: int = 5) -> None:
+def analyze_clusters(csv_path: str, n_clusters: int = 5) -> str:
     """Analyze and display sender clusters for cleanup recommendations.
 
     This command performs unsupervised clustering on email senders based on their
@@ -25,13 +23,11 @@ def analyze_clusters(csv_path: str, n_clusters: int = 5) -> None:
     """
     df = load_audit_data(csv_path)
     if df.empty:
-        click.echo("No audit data found. Run 'mailprune audit' first.")
-        return
+        return "No audit data found. Run 'mailprune audit' first."
 
     clusters = cluster_senders_unsupervised(df, n_clusters)
     if not clusters:
-        click.echo("Not enough data for clustering analysis.")
-        return
+        return "Not enough data for clustering analysis."
 
     # Group senders by cluster
     cluster_groups: dict[int, list[str]] = {}
@@ -50,9 +46,10 @@ def analyze_clusters(csv_path: str, n_clusters: int = 5) -> None:
             "unread_count": int(row["unread_count"]),
         }
 
-    click.echo("=== 📊 UNSUPERVISED SENDER CLUSTERING ANALYSIS ===")
-    click.echo(f"Clustered {len(df)} senders into {n_clusters} groups based on volume, engagement, and noise patterns.")
-    click.echo("")
+    output = []
+    output.append("=== 📊 UNSUPERVISED SENDER CLUSTERING ANALYSIS ===")
+    output.append(f"Clustered {len(df)} senders into {n_clusters} groups based on volume, engagement, and noise patterns.")
+    output.append("")
 
     # Calculate statistics for all clusters first
     cluster_stats = {}
@@ -75,19 +72,21 @@ def analyze_clusters(csv_path: str, n_clusters: int = 5) -> None:
     sorted_clusters = sorted(cluster_stats.items(), key=lambda x: x[1]["avg_open_rate"])
 
     for cluster_id, stats in sorted_clusters:
-        click.echo(f"🎯 CLUSTER {cluster_id} ({len(stats['senders'])} senders)")
+        output.append(f"🎯 CLUSTER {cluster_id} ({len(stats['senders'])} senders)")
 
-        click.echo(
+        output.append(
             f"   📈 Stats: {stats['total_emails']} emails, {stats['total_unread']} unread, "
             f"{stats['avg_open_rate']:.1f}% avg open rate, {stats['avg_ignorance']:.0f} avg ignorance"
         )
-        click.echo("   🗑️  Potential cleanup targets:")
+        output.append("   🗑️  Potential cleanup targets:")
 
         # Sort senders in cluster by ignorance score for cleanup suggestions
         sorted_senders = sorted(stats["senders"], key=lambda s: sender_data[s]["ignorance_score"], reverse=True)
 
         for sender in sorted_senders[:5]:  # Show top 5 per cluster
             data = sender_data[sender]
-            click.echo(f"    • {sender:<50} | Vol: {data['total_volume']:3d} | Open: {data['open_rate']:5.1f}% | Score: {data['ignorance_score']:6.0f}")
+            output.append(f"    • {sender:<50} | Vol: {data['total_volume']:3d} | Open: {data['open_rate']:5.1f}% | Score: {data['ignorance_score']:6.0f}")
 
-        click.echo("")
+        output.append("")
+
+    return "\n".join(output)

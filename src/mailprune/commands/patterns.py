@@ -3,14 +3,10 @@ Content patterns command with NLP processing for Mailprune.
 Analyzes email content snippets for comprehensive pattern recognition.
 """
 
-from typing import Any
-
-import click
-
 from mailprune.utils.analysis import analyze_title_patterns_core
 
 
-def analyze_patterns(cache_path: str, audit_data: list[dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> dict[str, dict[str, Any]]:
+def analyze_patterns(cache_path: str, audit_data: list[dict], top_n: int = 5, by: str = "volume", use_nlp: bool = True) -> str:
     """Analyze content patterns for top senders using email snippets.
 
     This function performs comprehensive content analysis on email data to identify
@@ -29,34 +25,35 @@ def analyze_patterns(cache_path: str, audit_data: list[dict], top_n: int = 5, by
     """
     results = analyze_title_patterns_core(cache_path, audit_data, top_n, by, use_nlp)
 
+    output = []
     # Display results
-    click.echo(f"\nContent Pattern Analysis (Top {top_n} Senders by {by})")
-    click.echo("=" * 60)
+    output.append(f"\nContent Pattern Analysis (Top {top_n} Senders by {by})")
+    output.append("=" * 60)
 
     for sender, data in results.items():
-        click.echo(f"\nSender: {sender}")
-        click.echo(f"Sample Subject: {data['sample_subject']}")
-        click.echo(f"Emails Analyzed: {data['email_count']}")
-        click.echo(f"NLP Processing: {'Enabled' if data['nlp_used'] else 'Disabled'}")
+        output.append(f"\nSender: {sender}")
+        output.append(f"Sample Subject: {data['sample_subject']}")
+        output.append(f"Emails Analyzed: {data['email_count']}")
+        output.append(f"NLP Processing: {'Enabled' if data['nlp_used'] else 'Disabled'}")
         # Display top intents
         top_intents = data.get("top_intents", [("unknown", 0)])
         if top_intents and len(top_intents) > 0:
             intent_strs = [f"{intent} ({score})" for intent, score in top_intents if score > 0]
             if intent_strs:
-                click.echo(f"Top Intents: {', '.join(intent_strs)}")
+                output.append(f"Top Intents: {', '.join(intent_strs)}")
             else:
-                click.echo("Top Intents: unknown")
+                output.append("Top Intents: unknown")
 
-        click.echo("Top Keywords from Email Content:")
+        output.append("Top Keywords from Email Content:")
         keyword_strs = [f"{keyword} ({count})" for keyword, count in data["top_keywords"]]
-        click.echo(f"  {', '.join(keyword_strs)}")
+        output.append(f"  {', '.join(keyword_strs)}")
 
         # Display entities if available
         if "top_entities" in data and data["top_entities"]:
-            click.echo("Extracted Entities:")
+            output.append("Extracted Entities:")
             for label, entities in data["top_entities"].items():
                 if entities:
                     entity_strs = [f"{entity} ({count})" for entity, count in entities]
-                    click.echo(f"  {label}: {', '.join(entity_strs)}")
+                    output.append(f"  {label}: {', '.join(entity_strs)}")
 
-    return results
+    return "\n".join(output)

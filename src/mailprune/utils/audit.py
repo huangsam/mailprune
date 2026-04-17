@@ -159,8 +159,10 @@ def fetch_uncached_messages(service, email_cache: dict[str, Any], messages_to_fe
         return batch_fetched
 
     # Process batches sequentially
-    for batch in batches:
+    for i, batch in enumerate(batches, 1):
         fetched_count += fetch_batch(batch)
+        if i % 5 == 0 or i == len(batches):
+            logger.info(f"Progress: Processed {i}/{len(batches)} batches ({fetched_count} emails fetched)")
 
     logger.info(f"Fetched {fetched_count} messages in {len(batches)} batches")
     return fetched_count

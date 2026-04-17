@@ -137,7 +137,7 @@ def audit(max_emails: int, query: str, cache_path: str, refresh: bool) -> None:
 @click.option("--brief", is_flag=True, help="Show brief summary instead of full report")
 def report(csv_path: str, brief: bool):
     """Generate a comprehensive email audit and cleanup report."""
-    generate_report(csv_path, brief)
+    click.echo(generate_report(csv_path, brief))
 
 
 @cli.command()
@@ -178,7 +178,7 @@ def patterns(cache_path: str, csv_path: str, top_n: int, by: str, use_nlp: bool)
         return
 
     audit_data = df.to_dict("records")
-    analyze_patterns(cache_path, audit_data, top_n, by, use_nlp)
+    click.echo(analyze_patterns(cache_path, audit_data, top_n, by, use_nlp))
 
 
 @cli.command()
@@ -186,7 +186,7 @@ def patterns(cache_path: str, csv_path: str, top_n: int, by: str, use_nlp: bool)
 @click.option("--tier", type=click.Choice(["high", "medium", "low", "zero", "all"]), default="all", help="Show detailed listing for specific engagement tier")
 def engagement(csv_path: str, tier: str):
     """Analyze sender engagement patterns and tiers."""
-    analyze_engagement(csv_path, tier)
+    click.echo(analyze_engagement(csv_path, tier))
 
 
 @cli.command()
@@ -194,4 +194,4 @@ def engagement(csv_path: str, tier: str):
 @click.option("--n-clusters", default=5, type=int, help="Number of clusters to create (default: 5)")
 def cluster(csv_path: str, n_clusters: int):
     """Analyze sender clusters for cleanup recommendations using unsupervised learning."""
-    analyze_clusters(csv_path, n_clusters)
+    click.echo(analyze_clusters(csv_path, n_clusters))

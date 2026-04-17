@@ -2,8 +2,6 @@
 Report command implementation for Mailprune.
 """
 
-import click
-
 from mailprune.utils import (
     calculate_overall_metrics,
     calculate_percentage,
@@ -15,7 +13,7 @@ from mailprune.utils import (
 )
 
 
-def generate_report(csv_path: str, brief: bool = False) -> None:
+def generate_report(csv_path: str, brief: bool = False) -> str:
     """Generate a comprehensive email audit and cleanup report.
 
     What the report includes:
@@ -28,7 +26,7 @@ def generate_report(csv_path: str, brief: bool = False) -> None:
     """
     df = load_audit_data(csv_path)
     if df.empty:
-        return
+        return "No audit data found. Run 'mailprune audit' first."
 
     current_metrics = calculate_overall_metrics(df)
     total_emails = df["total_volume"].sum()
@@ -131,7 +129,8 @@ def generate_report(csv_path: str, brief: bool = False) -> None:
             brief_report.append(f"   • {row['from'][:35]:<35} ({int(row['total_volume'])} emails, score: {row['ignorance_score']:.0f})")
         brief_report.append("")
         brief_report.append("💡 Run 'mailprune report' for full analysis")
-        click.echo("\n".join(brief_report))
-        return
+        report_str = "\n".join(brief_report)
+    else:
+        report_str = "\n".join(report)
 
-    click.echo("\n".join(report))
+    return report_str
