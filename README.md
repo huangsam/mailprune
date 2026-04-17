@@ -16,6 +16,7 @@ Mailprune allowed me to execute a much-needed 'digital deep clean' in record tim
 - **Smart Auditing**: Analyzes inbox volume, open rates, and patterns
 - **Targeted Cleanup**: Recommends unsubscribes and filters
 - **Advanced Analysis**: Engagement tiers, clustering, and content patterns
+- **AI & MCP Integration**: Built-in Model Context Protocol (MCP) server for direct AI assistant integration
 - **Fast & Efficient**: Parallel processing with intelligent caching
 
 ## 🚀 Quick Start
@@ -23,27 +24,26 @@ Mailprune allowed me to execute a much-needed 'digital deep clean' in record tim
 1. **Install**: See [USERGUIDE.md](USERGUIDE.md) for detailed setup
 2. **Set up Gmail API**: Follow [Google's guide], place `credentials.json` in `data/`
 3. **Run Assessment**: `uv run mailprune audit --max-emails 2000`
-4. **Get Recommendations**: `uv run mailprune report` and analyze results
+4. **AI Cleanup**: Register `mailprune-mcp` with your AI assistant for automated cleanup guidance
 
 [Google's guide]: https://developers.google.com/gmail/api/quickstart/python
 
 ## 📖 Usage
 
+### CLI Tools
 ```bash
 # Audit inbox
 uv run mailprune audit --max-emails 2000
 
 # Generate report
 uv run mailprune report
+```
 
-# Analyze engagement
-uv run mailprune engagement
+### AI / MCP Integration
+Start the MCP server to give your AI assistant (e.g., Claude Desktop, Cursor) access to your inbox analytics:
 
-# Find patterns
-uv run mailprune patterns --top-n 5 --by volume
-
-# Cluster senders
-uv run mailprune cluster
+```bash
+uv run mailprune-mcp
 ```
 
 Run `uv run mailprune --help` for all options.

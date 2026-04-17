@@ -79,6 +79,7 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 
 ### CLI Entry Points
 - `mailprune` - Main unified CLI tool with all commands (installed via entry point)
+- `mailprune-mcp` - FastMCP server for direct AI assistant integration
 
 ### Data Files
 - `data/noise_report.csv` - Generated audit results with sender metrics
@@ -87,6 +88,21 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 - `data/token.json` - Gmail API authentication token
 - `data/google-details.txt` - Additional Gmail API configuration details
 
+## MCP Capabilities
+
+Mailprune exposes its analysis engine via the Model Context Protocol (MCP), allowing AI assistants to directly interact with the inbox.
+
+### MCP Tools
+- `audit` - Triggers a fresh Gmail audit (Phase 1).
+- `report` - Generates a comprehensive cleanup report.
+- `patterns` - Performs NLP-driven content and intent analysis.
+- `engagement` - Analyzes sender interaction tiers.
+- `cluster` - Performs unsupervised sender clustering.
+
+### MCP Resources
+- `mailprune://guidance/cleanup-strategy` - Logic for interpreting clusters and intent.
+- `mailprune://guidance/noise-metrics` - Mathematical breakdown of the Ignorance Score.
+
 ## Agent Guidelines
 
 ### When Modifying Code
@@ -94,6 +110,7 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 - Format code: `uv run ruff format`
 - Lint code: `uv run ruff check --fix`
 - Type check: `uv run mypy src/`
+- **Verify MCP tool registration**: `uv run pytest tests/test_mcp.py`
 
 ### When Adding Features
 - Add corresponding tests in `tests/` directory
@@ -105,3 +122,4 @@ Tests are located in the `tests/` directory. Use pytest fixtures for test data a
 - Audit operations require Gmail API setup with valid credentials
 - Analysis operations require existing `data/noise_report.csv` file
 - Cache operations work with `data/email_cache.json` if present
+- MCP tools require `mcp` package and `anyio` for thread offloading

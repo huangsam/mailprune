@@ -78,12 +78,46 @@ Mailprune uses Google's Gmail API to analyze your emails securely. This requires
 ```bash
 # Test that everything works
 uv run mailprune --help
+
+# Verify MCP server (for AI integration)
+uv run mailprune-mcp --help
 ```
 
 **Troubleshooting:**
 - If you get authentication errors, delete `data/token.json` and re-run `uv run mailprune auth`
 - Ensure `credentials.json` is in the `data/` directory
 - Check that your Google account has Gmail enabled
+
+## 🤖 Using with AI (MCP)
+
+Mailprune includes a **Model Context Protocol (MCP)** server, which allows AI assistants like Claude Desktop, Cursor, and ChatGPT to directly analyze your inbox using Mailprune's engine.
+
+### Why use MCP?
+Instead of running individual CLI commands, you can simply ask your AI assistant: *"Who are my top noise makers?"* or *"Help me draft a cleanup plan for Cluster 4."* The AI will use Mailprune's tools to find the answer.
+
+### Setup MCP for Claude Desktop
+Add the following to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "mailprune": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/mailprune",
+        "run",
+        "mailprune-mcp"
+      ]
+    }
+  }
+}
+```
+
+### AI Guidance Resources
+The MCP server exposes internal guidance that helps the AI interpret your data:
+- `mailprune://guidance/cleanup-strategy`: How the AI should handle different clusters.
+- `mailprune://guidance/noise-metrics`: How to interpret Ignorance Scores.
 
 ## Quick Start (30 minutes)
 
