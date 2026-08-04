@@ -8,7 +8,7 @@ import logging
 import os
 
 import anyio
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 
 from mailprune.commands import (
     analyze_clusters,
@@ -28,8 +28,8 @@ from mailprune.utils import load_audit_data
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize FastMCP server
-mcp = FastMCP("Mailprune")
+# Initialize MCP server
+mcp = MCPServer("Mailprune")
 
 
 @mcp.resource("mailprune://guidance/cleanup-strategy")
@@ -40,9 +40,9 @@ def get_cleanup_strategy() -> str:
 Use this guidance to interpret the results from the `cluster` and `patterns` tools.
 
 ## Cluster Interpretation
-- **Cluster 4 (Silent Noise)**: Senders with low volume but near-zero open rates. 
+- **Cluster 4 (Silent Noise)**: Senders with low volume but near-zero open rates.
   - **Action**: High-confidence "Unsubscribe" candidates.
-- **Cluster 2 (Mega Noise)**: High-volume newsletters. 
+- **Cluster 2 (Mega Noise)**: High-volume newsletters.
   - **Action**: Compare `patterns` intent. If "promotional", suggest Unsubscribe. If "informational", suggest a weekly digest.
 - **Cluster 3/1 (Mid-Tier)**: Transactional or Utility alerts.
   - **Action**: Suggest "Gmail Filters" to skip the inbox rather than unsubscribing.
